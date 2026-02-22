@@ -1,7 +1,29 @@
-import { readdir } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { execSync } from "node:child_process";
 import type { SkillCall, MinimalMessage, MessageUsage } from "./types.js";
+
+// Built-in CLI commands that are NOT skills
+const BUILTIN_COMMANDS = new Set([
+  "/clear",
+  "/compact",
+  "/config",
+  "/cost",
+  "/doctor",
+  "/help",
+  "/init",
+  "/login",
+  "/logout",
+  "/memory",
+  "/model",
+  "/permissions",
+  "/plugin",
+  "/resume",
+  "/skills",
+  "/status",
+  "/terminal-setup",
+  "/vim",
+]);
 
 function deriveProjectName(cwd: string): string {
   const docsIdx = cwd.indexOf("/Documents/");
@@ -57,11 +79,11 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
     return [];
   }
 
-  // Pre-filter: use grep to find JSONL files containing Skill calls
+  // Pre-filter: use grep to find JSONL files containing Skill tool_use or slash command invocations
   const candidateFiles = new Set<string>();
   try {
     const grepResult = execSync(
-      `grep -rl '"name":"Skill"' ${projectsDir}/*/*.jsonl 2>/dev/null`,
+      `grep -rl -e '"name":"Skill"' -e '<command-name>' ${projectsDir}/*/*.jsonl 2>/dev/null`,
       { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 },
     );
     for (const line of grepResult.trim().split("\n")) {
@@ -90,6 +112,7 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
 async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
   const calls: SkillCall[] = [];
   const messageMap = new Map<string, MinimalMessage>();
+  const seenSlashCmds = new Set<string>();
 
   // Derive project dir from file path
   const dirName = basename(join(filePath, ".."));
@@ -151,6 +174,64 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
           }
         }
       }
+
+      // Check for slash command skill invocations (e.g. /devg, /review-pr)
+      if (msg.type === "user" && msg.message?.content) {
+        const content = msg.message.content;
+        const texts: string[] = [];
+        if (typeof content === "string") {
+          texts.push(content);
+        } else if (Array.isArray(content)) {
+          for (const block of content) {
+            if (
+              typeof block === "object" &&
+              block !== null &&
+              typeof (block as Record<string, unknown>).text === "string"
+            ) {
+              texts.push((block as Record<string, unknown>).text as string);
+            }
+          }
+        }
+
+        for (const text of texts) {
+          const cmdMatch = text.match(/<command-name>(\/[^<]+)<\/command-name>/);
+          if (!cmdMatch) continue;
+          const cmd = cmdMatch[1]; // e.g. "/devg"
+          if (BUILTIN_COMMANDS.has(cmd)) continue;
+
+          // This is a skill slash command
+          const skillName = cmd.slice(1); // remove leading "/"
+          // Avoid duplicates: skip if we already recorded this via Skill tool_use
+          // (the Skill tool_use and command-name can appear in the same session
+          //  but the command-name is the user-initiated entry point)
+          if (seenSlashCmds.has(`${msg.uuid}:${skillName}`)) continue;
+          seenSlashCmds.add(`${msg.uuid}:${skillName}`);
+
+          // Extract args from <command-message> if present
+          let args: string | undefined;
+          for (const t of texts) {
+            const argsMatch = t.match(
+              /<command-message>(.*?)<\/command-message>/s,
+            );
+            if (argsMatch && argsMatch[1] !== skillName) {
+              args = argsMatch[1].trim() || undefined;
+            }
+          }
+
+          const cwd = (msg.cwd ?? "") as string;
+          const call: SkillCall = {
+            skillName,
+            args,
+            timestamp: msg.timestamp,
+            sessionId: msg.sessionId ?? sessionId,
+            projectDir: dirName,
+            projectPath: deriveProjectName(cwd),
+            cwd,
+            triggerMessage: `/${skillName}${args ? " " + args : ""}`,
+          };
+          calls.push(call);
+        }
+      }
     } catch {
       // Skip malformed lines
     }
@@ -158,5 +239,24 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
 
   // Clear map to free memory
   messageMap.clear();
-  return calls;
+
+  // Deduplicate: if a skill was invoked via both slash command and Skill tool_use
+  // within a short window in the same session, keep only the slash command entry
+  // (it's the user-initiated action; the tool_use is the system response).
+  const deduped: SkillCall[] = [];
+  const toolUseCalls = calls.filter((c) => !c.triggerMessage?.startsWith("/"));
+  const slashCalls = calls.filter((c) => c.triggerMessage?.startsWith("/"));
+
+  const slashKeys = new Set(
+    slashCalls.map((c) => `${c.sessionId}:${c.skillName}`),
+  );
+
+  for (const c of toolUseCalls) {
+    const key = `${c.sessionId}:${c.skillName}`;
+    if (slashKeys.has(key)) continue; // already covered by slash command entry
+    deduped.push(c);
+  }
+  deduped.push(...slashCalls);
+
+  return deduped;
 }
