@@ -1,7 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { RegisteredSkill } from "./types.js";
-
 export async function getRegisteredSkills(
   claudeDir: string,
 ): Promise<RegisteredSkill[]> {

@@ -6,11 +6,14 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "composite": true,
     "types": ["bun-types"]
   },
+  "include": ["src"],
   "references": [
-    { "path": "packages/core" },
-    { "path": "packages/cli" },
-    { "path": "packages/web" }
+    { "path": "../core" },
+    { "path": "../web" }
   ]
 }

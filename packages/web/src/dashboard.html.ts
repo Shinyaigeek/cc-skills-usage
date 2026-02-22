@@ -1,4 +1,4 @@
-import type { AnalysisResult } from "../types.js";
+import type { AnalysisResult } from "@cc-skills-usage/core";
 
 export function generateDashboardHtml(result: AnalysisResult): string {
   const data = JSON.stringify(result);

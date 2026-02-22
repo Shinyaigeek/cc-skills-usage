@@ -1,11 +1,9 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import type { CliOptions } from "./types.js";
-import { getRegisteredSkills } from "./skills.js";
-import { scanSkillCalls } from "./scanner.js";
-import { analyze } from "./analyzer.js";
-import { renderTerminal } from "./renderers/terminal.js";
+import type { CliOptions } from "@cc-skills-usage/core";
+import { getRegisteredSkills, scanSkillCalls, analyze } from "@cc-skills-usage/core";
+import { renderTerminal } from "./terminal.js";
 
 function printHelp(): void {
   console.log(`
@@ -84,7 +82,7 @@ async function main(): Promise<void> {
   if (opts.output === "terminal") {
     renderTerminal(result);
   } else {
-    const { renderWeb } = await import("./renderers/web.js");
+    const { renderWeb } = await import("@cc-skills-usage/web");
     await renderWeb(result, opts.port);
   }
 }

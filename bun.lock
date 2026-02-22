@@ -1,0 +1,34 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "cc-skills-usage",
+    },
+    "packages/cli": {
+      "name": "@cc-skills-usage/cli",
+      "version": "0.1.0",
+      "dependencies": {
+        "@cc-skills-usage/core": "workspace:*",
+        "@cc-skills-usage/web": "workspace:*",
+      },
+    },
+    "packages/core": {
+      "name": "@cc-skills-usage/core",
+      "version": "0.1.0",
+    },
+    "packages/web": {
+      "name": "@cc-skills-usage/web",
+      "version": "0.1.0",
+      "dependencies": {
+        "@cc-skills-usage/core": "workspace:*",
+      },
+    },
+  },
+  "packages": {
+    "@cc-skills-usage/cli": ["@cc-skills-usage/cli@workspace:packages/cli"],
+
+    "@cc-skills-usage/core": ["@cc-skills-usage/core@workspace:packages/core"],
+
+    "@cc-skills-usage/web": ["@cc-skills-usage/web@workspace:packages/web"],
+  }
+}

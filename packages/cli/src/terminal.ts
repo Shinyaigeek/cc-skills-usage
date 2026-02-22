@@ -1,4 +1,4 @@
-import type { AnalysisResult } from "../types.js";
+import type { AnalysisResult } from "@cc-skills-usage/core";
 
 const BAR_CHARS = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
 const MAX_BAR_WIDTH = 30;

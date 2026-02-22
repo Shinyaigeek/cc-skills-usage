@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": ["packages/*"],
   "scripts": {
-    "start": "bun src/index.ts",
-    "dev": "bun --watch src/index.ts"
+    "start": "bun packages/cli/src/index.ts",
+    "dev": "bun --watch packages/cli/src/index.ts"
   }
 }

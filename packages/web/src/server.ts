@@ -1,5 +1,5 @@
 import { exec } from "node:child_process";
-import type { AnalysisResult } from "../types.js";
+import type { AnalysisResult } from "@cc-skills-usage/core";
 import { generateDashboardHtml } from "./dashboard.html.js";
 
 export async function renderWeb(
