@@ -1,16 +1,32 @@
 import type {
   CliOptions,
+  Period,
   SkillCall,
   RegisteredSkill,
   AnalysisResult,
   SkillStats,
   ProjectSkillStats,
-  DailyStats,
+  PeriodStats,
   TokenStats,
 } from "./types.js";
 
 function toDateStr(ts: string): string {
   return ts.slice(0, 10); // YYYY-MM-DD from ISO string
+}
+
+function toPeriodKey(ts: string, period: Period): string {
+  const date = ts.slice(0, 10); // YYYY-MM-DD
+  if (period === "day") return date;
+  if (period === "month") return date.slice(0, 7) + "-01";
+  // week: round to ISO week Monday
+  const d = new Date(date + "T00:00:00");
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diff = day === 0 ? -6 : 1 - day; // offset to Monday
+  d.setDate(d.getDate() + diff);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
 }
 
 export function analyze(
@@ -73,15 +89,16 @@ export function analyze(
     })
     .sort((a, b) => b.totalCalls - a.totalCalls);
 
-  // ── Daily stats ──
-  const dailyMap = new Map<string, Map<string, number>>();
+  // ── Period stats ──
+  const period = opts.period ?? "day";
+  const periodMap = new Map<string, Map<string, number>>();
   for (const c of filtered) {
-    const date = toDateStr(c.timestamp);
-    if (!dailyMap.has(date)) dailyMap.set(date, new Map());
-    const skills = dailyMap.get(date)!;
+    const key = toPeriodKey(c.timestamp, period);
+    if (!periodMap.has(key)) periodMap.set(key, new Map());
+    const skills = periodMap.get(key)!;
     skills.set(c.skillName, (skills.get(c.skillName) ?? 0) + 1);
   }
-  const dailyStats: DailyStats[] = [...dailyMap.entries()]
+  const periodStats: PeriodStats[] = [...periodMap.entries()]
     .map(([date, skills]) => {
       const skillObj: Record<string, number> = {};
       let total = 0;
@@ -145,7 +162,8 @@ export function analyze(
     totalCalls: filtered.length,
     skillStats,
     projectStats,
-    dailyStats,
+    periodStats,
+    period,
     tokenStats,
     unusedSkills,
     recentCalls,

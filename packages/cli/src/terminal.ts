@@ -78,11 +78,14 @@ export function renderTerminal(result: AnalysisResult): void {
     }
   }
 
-  // ── Daily timeline ──
-  if (result.dailyStats.length > 0) {
-    header("Daily Timeline");
-    const maxDaily = Math.max(...result.dailyStats.map((d) => d.total));
-    for (const d of result.dailyStats) {
+  // ── Period timeline ──
+  if (result.periodStats.length > 0) {
+    const timelineTitle = result.period === "week" ? "Weekly Timeline"
+      : result.period === "month" ? "Monthly Timeline"
+      : "Daily Timeline";
+    header(timelineTitle);
+    const maxDaily = Math.max(...result.periodStats.map((d) => d.total));
+    for (const d of result.periodStats) {
       const skills = Object.entries(d.skills)
         .sort((a, b) => b[1] - a[1])
         .map(([name, count]) => `${name}:${count}`)

@@ -122,7 +122,7 @@ export function generateDashboardHtml(result: AnalysisResult): string {
 
 <div class="grid">
   <div class="card card-full">
-    <h2>Daily Timeline</h2>
+    <h2 id="timelineTitle">Daily Timeline</h2>
     <div class="chart-container" style="height:250px"><canvas id="dailyChart"></canvas></div>
   </div>
 </div>
@@ -215,16 +215,19 @@ if (D.tokenStats.length > 0) {
   });
 }
 
-// Daily chart
-if (D.dailyStats.length > 0) {
-  const allSkills = [...new Set(D.dailyStats.flatMap(d => Object.keys(d.skills)))];
+// Timeline chart
+const timelineTitles = { day: 'Daily Timeline', week: 'Weekly Timeline', month: 'Monthly Timeline' };
+document.getElementById('timelineTitle').textContent = timelineTitles[D.period] || 'Daily Timeline';
+
+if (D.periodStats.length > 0) {
+  const allSkills = [...new Set(D.periodStats.flatMap(d => Object.keys(d.skills)))];
   new Chart(document.getElementById('dailyChart'), {
     type: 'bar',
     data: {
-      labels: D.dailyStats.map(d => d.date),
+      labels: D.periodStats.map(d => d.date),
       datasets: allSkills.map((skill, i) => ({
         label: skill,
-        data: D.dailyStats.map(d => d.skills[skill] || 0),
+        data: D.periodStats.map(d => d.skills[skill] || 0),
         backgroundColor: COLORS[i % COLORS.length],
         borderRadius: 2,
       }))

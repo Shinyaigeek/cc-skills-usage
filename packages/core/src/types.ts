@@ -1,11 +1,14 @@
 // ── CLI Options ──
 
+export type Period = "day" | "week" | "month";
+
 export interface CliOptions {
   output: "terminal" | "web";
   from?: string; // YYYY-MM-DD
   to?: string; // YYYY-MM-DD
   project?: string; // partial match on project path
   skill?: string; // skill name filter
+  period: Period;
   port: number;
   claudeDir: string;
   limit: number;
@@ -73,8 +76,8 @@ export interface ProjectSkillStats {
   totalCalls: number;
 }
 
-export interface DailyStats {
-  date: string; // YYYY-MM-DD
+export interface PeriodStats {
+  date: string; // YYYY-MM-DD (period start date)
   skills: Record<string, number>;
   total: number;
 }
@@ -92,7 +95,8 @@ export interface AnalysisResult {
   totalCalls: number;
   skillStats: SkillStats[];
   projectStats: ProjectSkillStats[];
-  dailyStats: DailyStats[];
+  periodStats: PeriodStats[];
+  period: Period;
   tokenStats: TokenStats[];
   unusedSkills: string[];
   recentCalls: SkillCall[];
