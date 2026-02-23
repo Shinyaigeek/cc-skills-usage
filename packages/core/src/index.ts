@@ -1,5 +1,4 @@
 export type {
-  Period,
   CliOptions,
   MinimalMessage,
   MessageUsage,
@@ -7,7 +6,7 @@ export type {
   RegisteredSkill,
   SkillStats,
   ProjectSkillStats,
-  PeriodStats,
+  DailyStats,
   TokenStats,
   AnalysisResult,
 } from "./types.js";

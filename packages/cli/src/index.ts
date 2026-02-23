@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import type { CliOptions, Period } from "@cc-skills-usage/core";
+import type { CliOptions } from "@cc-skills-usage/core";
 import { getRegisteredSkills, scanSkillCalls, analyze } from "@cc-skills-usage/core";
 import { renderTerminal } from "./terminal.js";
 
@@ -17,7 +17,6 @@ Options:
   --to <date>             End date filter (YYYY-MM-DD)
   --project, -p <name>    Project path partial match filter
   --skill, -s <name>      Skill name filter
-  --period <period>       Aggregation period: "day" (default), "week", or "month"
   --port <number>         Web server port (default: 3939)
   --claude-dir <path>     Override ~/.claude location
   --limit, -n <number>    Number of recent calls to show (default: 50)
@@ -33,7 +32,6 @@ function parseCli(): CliOptions {
       to: { type: "string" },
       project: { type: "string", short: "p" },
       skill: { type: "string", short: "s" },
-      period: { type: "string", default: "day" },
       port: { type: "string", default: "3939" },
       "claude-dir": { type: "string" },
       limit: { type: "string", short: "n", default: "50" },
@@ -53,19 +51,12 @@ function parseCli(): CliOptions {
     process.exit(1);
   }
 
-  const period = values.period as string;
-  if (period !== "day" && period !== "week" && period !== "month") {
-    console.error(`Invalid period: ${period}. Use "day", "week", or "month".`);
-    process.exit(1);
-  }
-
   return {
     output: output as "terminal" | "web",
     from: values.from as string | undefined,
     to: values.to as string | undefined,
     project: values.project as string | undefined,
     skill: values.skill as string | undefined,
-    period: period as Period,
     port: parseInt(values.port as string, 10),
     claudeDir: (values["claude-dir"] as string) ?? join(homedir(), ".claude"),
     limit: parseInt(values.limit as string, 10),
