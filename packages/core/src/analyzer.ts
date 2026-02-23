@@ -7,6 +7,8 @@ import type {
   ProjectSkillStats,
   DailyStats,
   TokenStats,
+  Conversation,
+  ConversationStats,
 } from "./types.js";
 
 function toDateStr(ts: string): string {
@@ -17,6 +19,7 @@ export function analyze(
   calls: SkillCall[],
   registeredSkills: RegisteredSkill[],
   opts: CliOptions,
+  conversations?: Conversation[],
 ): AnalysisResult {
   // ── Filter ──
   let filtered = calls;
@@ -141,6 +144,72 @@ export function analyze(
   const from = timestamps.length ? toDateStr(timestamps[timestamps.length - 1]) : "";
   const to = timestamps.length ? toDateStr(timestamps[0]) : "";
 
+  // ── Conversations ──
+  let filteredConversations: Conversation[] | undefined;
+  let conversationStats: ConversationStats | undefined;
+
+  if (conversations) {
+    filteredConversations = conversations;
+
+    // Apply from/to/project filters (but not --skill, since the point is to see sessions without skills)
+    if (opts.from) {
+      filteredConversations = filteredConversations.filter(
+        (c) => toDateStr(c.firstTimestamp) >= opts.from!,
+      );
+    }
+    if (opts.to) {
+      filteredConversations = filteredConversations.filter(
+        (c) => toDateStr(c.lastTimestamp) <= opts.to!,
+      );
+    }
+    if (opts.project) {
+      const p = opts.project.toLowerCase();
+      filteredConversations = filteredConversations.filter(
+        (c) =>
+          c.projectPath.toLowerCase().includes(p) ||
+          c.projectDir.toLowerCase().includes(p),
+      );
+    }
+
+    // Compute stats
+    const withSkills = filteredConversations.filter((c) => c.hasSkillCalls).length;
+    const withoutSkills = filteredConversations.length - withSkills;
+
+    // Project breakdown
+    const projMap = new Map<
+      string,
+      { total: number; withSkills: number; withoutSkills: number }
+    >();
+    for (const c of filteredConversations) {
+      const name = c.projectPath;
+      if (!projMap.has(name)) {
+        projMap.set(name, { total: 0, withSkills: 0, withoutSkills: 0 });
+      }
+      const entry = projMap.get(name)!;
+      entry.total++;
+      if (c.hasSkillCalls) entry.withSkills++;
+      else entry.withoutSkills++;
+    }
+    const projectBreakdown = [...projMap.entries()]
+      .map(([projectName, v]) => ({
+        projectName,
+        totalSessions: v.total,
+        sessionsWithSkills: v.withSkills,
+        sessionsWithoutSkills: v.withoutSkills,
+      }))
+      .sort((a, b) => b.totalSessions - a.totalSessions);
+
+    conversationStats = {
+      totalSessions: filteredConversations.length,
+      sessionsWithSkills: withSkills,
+      sessionsWithoutSkills: withoutSkills,
+      projectBreakdown,
+    };
+
+    // Apply limit
+    filteredConversations = filteredConversations.slice(0, opts.limit);
+  }
+
   return {
     totalCalls: filtered.length,
     skillStats,
@@ -150,5 +219,7 @@ export function analyze(
     unusedSkills,
     recentCalls,
     dateRange: { from, to },
+    conversations: filteredConversations,
+    conversationStats,
   };
 }

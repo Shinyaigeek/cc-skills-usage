@@ -9,6 +9,7 @@ export interface CliOptions {
   port: number;
   claudeDir: string;
   limit: number;
+  conversations: boolean;
 }
 
 // ── JSONL message types ──
@@ -60,6 +61,40 @@ export interface RegisteredSkill {
   dirPath: string;
 }
 
+// ── Conversation types ──
+
+export interface ConversationMessage {
+  timestamp: string;
+  content: string; // user message text (truncated to 500 chars)
+}
+
+export interface Conversation {
+  sessionId: string;
+  projectDir: string;
+  projectPath: string;
+  firstTimestamp: string;
+  lastTimestamp: string;
+  messageCount: number;
+  userMessageCount: number;
+  userMessages: ConversationMessage[];
+  skillsUsed: string[]; // skill names used in this session
+  hasSkillCalls: boolean;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+}
+
+export interface ConversationStats {
+  totalSessions: number;
+  sessionsWithSkills: number;
+  sessionsWithoutSkills: number;
+  projectBreakdown: Array<{
+    projectName: string;
+    totalSessions: number;
+    sessionsWithSkills: number;
+    sessionsWithoutSkills: number;
+  }>;
+}
+
 // ── Analysis results ──
 
 export interface SkillStats {
@@ -97,4 +132,6 @@ export interface AnalysisResult {
   unusedSkills: string[];
   recentCalls: SkillCall[];
   dateRange: { from: string; to: string };
+  conversations?: Conversation[];
+  conversationStats?: ConversationStats;
 }

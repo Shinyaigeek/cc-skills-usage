@@ -1,7 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { execSync } from "node:child_process";
-import type { SkillCall, MinimalMessage, MessageUsage } from "./types.js";
+import type { SkillCall, MinimalMessage, MessageUsage, Conversation, ConversationMessage } from "./types.js";
 
 // Built-in CLI commands that are NOT skills
 const BUILTIN_COMMANDS = new Set([
@@ -259,4 +259,186 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
   deduped.push(...slashCalls);
 
   return deduped;
+}
+
+// ── Conversation scanner ──
+
+const BATCH_SIZE = 20;
+
+export async function scanConversations(claudeDir: string): Promise<Conversation[]> {
+  const projectsDir = join(claudeDir, "projects");
+  const conversations: Conversation[] = [];
+
+  let projectDirs: string[];
+  try {
+    const entries = await readdir(projectsDir, { withFileTypes: true });
+    projectDirs = entries
+      .filter((e) => e.isDirectory())
+      .map((e) => join(projectsDir, e.name));
+  } catch {
+    return [];
+  }
+
+  // Collect all JSONL files
+  const allFiles: string[] = [];
+  for (const dir of projectDirs) {
+    try {
+      const files = await readdir(dir);
+      for (const f of files) {
+        if (f.endsWith(".jsonl")) {
+          allFiles.push(join(dir, f));
+        }
+      }
+    } catch {
+      // skip inaccessible dirs
+    }
+  }
+
+  // Process in batches
+  for (let i = 0; i < allFiles.length; i += BATCH_SIZE) {
+    const batch = allFiles.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(processJsonlForConversation));
+    for (const conv of results) {
+      if (conv) conversations.push(conv);
+    }
+  }
+
+  // Sort by lastTimestamp descending
+  conversations.sort(
+    (a, b) => new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime(),
+  );
+
+  return conversations;
+}
+
+async function processJsonlForConversation(filePath: string): Promise<Conversation | null> {
+  const dirName = basename(join(filePath, ".."));
+  const sessionId = basename(filePath).replace(".jsonl", "");
+
+  const file = Bun.file(filePath);
+  let text: string;
+  try {
+    text = await file.text();
+  } catch {
+    return null;
+  }
+
+  if (!text.trim()) return null;
+
+  let messageCount = 0;
+  let userMessageCount = 0;
+  let firstTimestamp = "";
+  let lastTimestamp = "";
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let cwd = "";
+  const userMessages: ConversationMessage[] = [];
+  const skillNames = new Set<string>();
+
+  for (const line of text.split("\n")) {
+    if (!line) continue;
+    try {
+      const entry = JSON.parse(line) as Record<string, unknown>;
+      if (!entry.uuid) continue;
+
+      const timestamp = entry.timestamp as string;
+      const type = entry.type as string;
+
+      if (!timestamp) continue;
+
+      messageCount++;
+
+      if (!firstTimestamp || timestamp < firstTimestamp) firstTimestamp = timestamp;
+      if (!lastTimestamp || timestamp > lastTimestamp) lastTimestamp = timestamp;
+
+      if (!cwd && entry.cwd) cwd = entry.cwd as string;
+
+      // Extract token usage
+      const message = entry.message as Record<string, unknown> | undefined;
+      if (message) {
+        const usage = message.usage as Record<string, unknown> | undefined;
+        if (usage) {
+          totalInputTokens += (usage.input_tokens as number) ?? 0;
+          totalOutputTokens += (usage.output_tokens as number) ?? 0;
+        }
+      }
+
+      // Collect user messages
+      if (type === "user" && message) {
+        userMessageCount++;
+        const content = message.content;
+        let msgText = "";
+        if (typeof content === "string") {
+          msgText = content;
+        } else if (Array.isArray(content)) {
+          for (const block of content) {
+            if (
+              typeof block === "object" &&
+              block !== null &&
+              typeof (block as Record<string, unknown>).text === "string"
+            ) {
+              msgText += (block as Record<string, unknown>).text as string;
+            }
+          }
+        }
+
+        if (msgText && userMessages.length < 100) {
+          userMessages.push({
+            timestamp,
+            content: msgText.length > 500 ? msgText.slice(0, 500) + "…" : msgText,
+          });
+        }
+
+        // Detect slash command skills in user messages
+        if (msgText) {
+          const cmdMatch = msgText.match(/<command-name>(\/[^<]+)<\/command-name>/);
+          if (cmdMatch) {
+            const cmd = cmdMatch[1];
+            if (!BUILTIN_COMMANDS.has(cmd)) {
+              skillNames.add(cmd.slice(1));
+            }
+          }
+        }
+      }
+
+      // Detect Skill tool_use in assistant messages
+      if (type === "assistant" && message?.content) {
+        const content = message.content;
+        if (Array.isArray(content)) {
+          for (const block of content as Record<string, unknown>[]) {
+            if (
+              block.type === "tool_use" &&
+              block.name === "Skill"
+            ) {
+              const input = block.input as Record<string, unknown> | undefined;
+              if (input?.skill) {
+                skillNames.add(input.skill as string);
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // skip malformed lines
+    }
+  }
+
+  if (messageCount === 0) return null;
+
+  const skillsUsed = [...skillNames].sort();
+
+  return {
+    sessionId,
+    projectDir: dirName,
+    projectPath: deriveProjectName(cwd || dirName),
+    firstTimestamp,
+    lastTimestamp,
+    messageCount,
+    userMessageCount,
+    userMessages,
+    skillsUsed,
+    hasSkillCalls: skillsUsed.length > 0,
+    totalInputTokens,
+    totalOutputTokens,
+  };
 }

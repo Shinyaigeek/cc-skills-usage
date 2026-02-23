@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import type { CliOptions } from "@cc-skills-usage/core";
-import { getRegisteredSkills, scanSkillCalls, analyze } from "@cc-skills-usage/core";
+import { getRegisteredSkills, scanSkillCalls, scanConversations, analyze } from "@cc-skills-usage/core";
 import { renderTerminal } from "./terminal.js";
 
 function printHelp(): void {
@@ -21,6 +21,7 @@ Options:
   --port <number>         Web server port (default: 3939)
   --claude-dir <path>     Override ~/.claude location
   --limit, -n <number>    Number of recent calls to show (default: 50)
+  --conversations         Include all conversation data (not just skill calls)
   --help, -h              Show this help
 `);
 }
@@ -36,6 +37,7 @@ function parseCli(): CliOptions {
       port: { type: "string", default: "3939" },
       "claude-dir": { type: "string" },
       limit: { type: "string", short: "n", default: "50" },
+      conversations: { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
     strict: true,
@@ -61,6 +63,7 @@ function parseCli(): CliOptions {
     port: parseInt(values.port as string, 10),
     claudeDir: (values["claude-dir"] as string) ?? join(homedir(), ".claude"),
     limit: parseInt(values.limit as string, 10),
+    conversations: !!values.conversations,
   };
 }
 
@@ -78,7 +81,14 @@ async function main(): Promise<void> {
     `\x1b[2mFound ${calls.length} skill calls across ${new Set(calls.map((c) => c.sessionId)).size} sessions\x1b[0m`,
   );
 
-  const result = analyze(calls, skills, opts);
+  let conversations;
+  if (opts.conversations) {
+    console.log("\x1b[2mScanning all conversations...\x1b[0m");
+    conversations = await scanConversations(opts.claudeDir);
+    console.log(`\x1b[2mFound ${conversations.length} total sessions\x1b[0m`);
+  }
+
+  const result = analyze(calls, skills, opts, conversations);
 
   if (opts.output === "terminal") {
     renderTerminal(result);

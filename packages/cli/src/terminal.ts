@@ -134,5 +134,58 @@ export function renderTerminal(result: AnalysisResult): void {
     }
   }
 
+  // ── Conversation Overview ──
+  if (result.conversationStats) {
+    const cs = result.conversationStats;
+    const rate = cs.totalSessions > 0
+      ? ((cs.sessionsWithSkills / cs.totalSessions) * 100).toFixed(1)
+      : "0.0";
+
+    header("Conversation Overview");
+    console.log(
+      `  Total sessions: ${bold(fmt(cs.totalSessions))}    ` +
+        `With skills: ${bold(fmt(cs.sessionsWithSkills))}    ` +
+        `Without skills: ${bold(fmt(cs.sessionsWithoutSkills))}    ` +
+        `Adoption rate: ${bold(rate + "%")}`,
+    );
+
+    if (cs.projectBreakdown.length > 0) {
+      console.log();
+      const nameWidth = Math.max(
+        ...cs.projectBreakdown.map((p) => p.projectName.length),
+        10,
+      );
+      console.log(
+        `  ${"Project".padEnd(nameWidth)}  ${"Total".padStart(6)}  ${"Skills".padStart(6)}  ${"No Skills".padStart(9)}  ${"Rate".padStart(6)}`,
+      );
+      console.log(`  ${"─".repeat(nameWidth + 6 + 6 + 9 + 6 + 8)}`);
+      for (const p of cs.projectBreakdown) {
+        const pRate = p.totalSessions > 0
+          ? ((p.sessionsWithSkills / p.totalSessions) * 100).toFixed(0) + "%"
+          : "0%";
+        console.log(
+          `  ${p.projectName.padEnd(nameWidth)}  ${String(p.totalSessions).padStart(6)}  ${String(p.sessionsWithSkills).padStart(6)}  ${String(p.sessionsWithoutSkills).padStart(9)}  ${pRate.padStart(6)}`,
+        );
+      }
+    }
+  }
+
+  // ── Recent Sessions Without Skills ──
+  if (result.conversations) {
+    const noSkills = result.conversations.filter((c) => !c.hasSkillCalls);
+    if (noSkills.length > 0) {
+      header(`Recent Sessions Without Skills (${noSkills.length})`);
+      for (const c of noSkills) {
+        const ts = c.lastTimestamp.replace("T", " ").slice(0, 19);
+        const preview = c.userMessages.length > 0
+          ? c.userMessages[0].content.slice(0, 80).replace(/\n/g, " ")
+          : "";
+        console.log(
+          `  ${dim(ts)}  ${c.projectPath.padEnd(30)}  ${dim(String(c.userMessageCount) + " msgs")}  ${dim(preview ? `"${preview}"` : "")}`,
+        );
+      }
+    }
+  }
+
   console.log();
 }

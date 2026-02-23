@@ -107,6 +107,10 @@ export function generateDashboardHtml(result: AnalysisResult): string {
     <div class="stat-label">Period</div>
     <div class="stat-value" id="period" style="font-size:20px"></div>
   </div>
+  <div class="card" id="adoptionCard" style="display:none">
+    <div class="stat-label">Skill Adoption Rate</div>
+    <div class="stat-value" id="adoptionRate"></div>
+  </div>
 </div>
 
 <div class="grid">
@@ -152,6 +156,40 @@ export function generateDashboardHtml(result: AnalysisResult): string {
       <tbody id="recentTable"></tbody>
     </table>
   </div>
+</div>
+
+<div id="conversationSection" style="display:none">
+<div class="grid">
+  <div class="card">
+    <h2>Sessions Overview</h2>
+    <div class="chart-container" style="height:250px"><canvas id="sessionsChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Project Adoption</h2>
+    <table>
+      <thead><tr><th>Project</th><th class="num">Total</th><th class="num">With Skills</th><th class="num">Without</th><th class="num">Rate</th></tr></thead>
+      <tbody id="convProjectTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card card-full">
+    <h2>Conversations</h2>
+    <div class="filter-bar">
+      <select id="convFilter">
+        <option value="all">All Sessions</option>
+        <option value="without">Without Skills</option>
+        <option value="with">With Skills</option>
+      </select>
+      <input id="convFilterText" type="text" placeholder="Filter by project...">
+    </div>
+    <table>
+      <thead><tr><th>Time</th><th>Project</th><th class="num">Messages</th><th>Skills Used</th><th>First User Message</th></tr></thead>
+      <tbody id="convTable"></tbody>
+    </table>
+  </div>
+</div>
 </div>
 
 <script>
@@ -277,6 +315,72 @@ function escHtml(s) {
 
 renderRecent('');
 document.getElementById('filterText').addEventListener('input', e => renderRecent(e.target.value));
+
+// ── Conversations ──
+if (D.conversationStats) {
+  document.getElementById('conversationSection').style.display = '';
+  document.getElementById('adoptionCard').style.display = '';
+
+  const cs = D.conversationStats;
+  const rate = cs.totalSessions > 0 ? ((cs.sessionsWithSkills / cs.totalSessions) * 100).toFixed(1) + '%' : '0%';
+  document.getElementById('adoptionRate').textContent = rate;
+
+  // Sessions doughnut
+  new Chart(document.getElementById('sessionsChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['With Skills', 'Without Skills'],
+      datasets: [{
+        data: [cs.sessionsWithSkills, cs.sessionsWithoutSkills],
+        backgroundColor: ['#3fb950', '#f78166'],
+        borderColor: '#161b22',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#8b949e' } },
+      }
+    }
+  });
+
+  // Project adoption table
+  const cpBody = document.getElementById('convProjectTable');
+  cs.projectBreakdown.forEach(p => {
+    const pRate = p.totalSessions > 0 ? ((p.sessionsWithSkills / p.totalSessions) * 100).toFixed(0) + '%' : '0%';
+    cpBody.innerHTML += '<tr><td>' + escHtml(p.projectName) + '</td><td class="num">' + p.totalSessions + '</td><td class="num">' + p.sessionsWithSkills + '</td><td class="num">' + p.sessionsWithoutSkills + '</td><td class="num">' + pRate + '</td></tr>';
+  });
+
+  // Conversations table
+  function renderConversations(mode, textFilter) {
+    const tbody = document.getElementById('convTable');
+    const lc = (textFilter || '').toLowerCase();
+    let rows = D.conversations || [];
+    if (mode === 'without') rows = rows.filter(c => !c.hasSkillCalls);
+    else if (mode === 'with') rows = rows.filter(c => c.hasSkillCalls);
+    if (lc) rows = rows.filter(c => c.projectPath.toLowerCase().includes(lc));
+    tbody.innerHTML = rows.map(c => {
+      const ts = c.lastTimestamp.replace('T', ' ').slice(0, 19);
+      const skills = c.skillsUsed.length > 0
+        ? c.skillsUsed.map(s => '<span class="tag">' + escHtml(s) + '</span>').join(' ')
+        : '<span class="dim">none</span>';
+      const preview = c.userMessages.length > 0
+        ? escHtml(c.userMessages[0].content.slice(0, 120).replace(/\\n/g, ' '))
+        : '';
+      return '<tr><td class="dim">' + ts + '</td><td>' + escHtml(c.projectPath) + '</td><td class="num">' + c.userMessageCount + '</td><td>' + skills + '</td><td class="truncate">' + preview + '</td></tr>';
+    }).join('');
+  }
+
+  renderConversations('all', '');
+  document.getElementById('convFilter').addEventListener('change', e => {
+    renderConversations(e.target.value, document.getElementById('convFilterText').value);
+  });
+  document.getElementById('convFilterText').addEventListener('input', e => {
+    renderConversations(document.getElementById('convFilter').value, e.target.value);
+  });
+}
 </script>
 </body>
 </html>`;
