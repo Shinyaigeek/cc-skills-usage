@@ -17,7 +17,8 @@
     "fmt:check": "bunx oxfmt --check packages/ '!**/dist/**'",
     "check": "bunx oxlint packages/ '!**/dist/**' && bunx oxfmt --check packages/ '!**/dist/**'",
     "check:fix": "bunx oxlint --fix packages/ '!**/dist/**' && bunx oxfmt packages/ '!**/dist/**'",
-    "typecheck": "bunx tsc -b"
+    "typecheck": "bunx tsc -b",
+    "test": "bun test"
   },
   "devDependencies": {
     "bun-types": "^1.3.9",

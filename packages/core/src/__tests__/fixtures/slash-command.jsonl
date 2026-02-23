@@ -1,0 +1,2 @@
+{"uuid":"u1","parentUuid":null,"type":"user","timestamp":"2025-06-02T12:00:00Z","cwd":"/Users/dev/Documents/another-project","sessionId":"sess-2","message":{"role":"user","content":"<command-name>/review-pr</command-name>\n<command-message>123</command-message>"}}
+{"uuid":"u2","parentUuid":"u1","type":"assistant","timestamp":"2025-06-02T12:00:05Z","cwd":"/Users/dev/Documents/another-project","sessionId":"sess-2","message":{"role":"assistant","content":"Reviewing PR #123..."}}

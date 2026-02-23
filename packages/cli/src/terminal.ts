@@ -3,7 +3,7 @@ import type { AnalysisResult } from "@cc-skills-usage/core";
 const BAR_CHARS = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
 const MAX_BAR_WIDTH = 30;
 
-function bar(value: number, max: number): string {
+export function bar(value: number, max: number): string {
   if (max === 0) return "";
   const ratio = value / max;
   const fullBlocks = Math.floor(ratio * MAX_BAR_WIDTH);

@@ -31,13 +31,13 @@ const BUILTIN_COMMANDS = new Set([
   "/vim",
 ]);
 
-function deriveProjectName(cwd: string): string {
+export function deriveProjectName(cwd: string): string {
   const docsIdx = cwd.indexOf("/Documents/");
   if (docsIdx !== -1) return cwd.slice(docsIdx + "/Documents/".length);
   return cwd;
 }
 
-function extractUserTrigger(
+export function extractUserTrigger(
   msgs: Map<string, MinimalMessage>,
   parentUuid: string | null,
 ): string | undefined {
@@ -56,7 +56,7 @@ function extractUserTrigger(
   return undefined;
 }
 
-function extractUsage(msg: MinimalMessage): MessageUsage | undefined {
+export function extractUsage(msg: MinimalMessage): MessageUsage | undefined {
   const usage = (msg.message as Record<string, unknown>)?.usage as
     | Record<string, unknown>
     | undefined;
@@ -110,7 +110,7 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
   return allCalls;
 }
 
-async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
+export async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
   const calls: SkillCall[] = [];
   const messageMap = new Map<string, MinimalMessage>();
   const seenSlashCmds = new Set<string>();
@@ -305,7 +305,7 @@ export async function scanConversations(claudeDir: string): Promise<Conversation
   return conversations;
 }
 
-async function processJsonlForConversation(filePath: string): Promise<Conversation | null> {
+export async function processJsonlForConversation(filePath: string): Promise<Conversation | null> {
   const dirName = basename(join(filePath, ".."));
   const sessionId = basename(filePath).replace(".jsonl", "");
 
