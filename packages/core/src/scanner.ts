@@ -1,7 +1,13 @@
-import { readdir, stat } from "node:fs/promises";
-import { join, basename } from "node:path";
 import { execSync } from "node:child_process";
-import type { SkillCall, MinimalMessage, MessageUsage, Conversation, ConversationMessage } from "./types.js";
+import { readdir } from "node:fs/promises";
+import { basename, join } from "node:path";
+import type {
+  Conversation,
+  ConversationMessage,
+  MessageUsage,
+  MinimalMessage,
+  SkillCall,
+} from "./types.js";
 
 // Built-in CLI commands that are NOT skills
 const BUILTIN_COMMANDS = new Set([
@@ -42,7 +48,7 @@ function extractUserTrigger(
     if (m.type === "user" && m.message) {
       const content = m.message.content;
       if (typeof content === "string" && content.length > 0) {
-        return content.length > 200 ? content.slice(0, 200) + "…" : content;
+        return content.length > 200 ? `${content.slice(0, 200)}…` : content;
       }
     }
     current = m.parentUuid;
@@ -69,10 +75,10 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
   const allCalls: SkillCall[] = [];
 
   // Get all project directories
-  let projectDirs: string[];
+  let _projectDirs: string[];
   try {
     const entries = await readdir(projectsDir, { withFileTypes: true });
-    projectDirs = entries
+    _projectDirs = entries
       .filter((e) => e.isDirectory())
       .map((e) => join(projectsDir, e.name));
   } catch {
@@ -116,8 +122,7 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
 
   // Derive project dir from file path
   const dirName = basename(join(filePath, ".."));
-  const sessionId =
-    basename(filePath).replace(".jsonl", "");
+  const sessionId = basename(filePath).replace(".jsonl", "");
 
   const file = Bun.file(filePath);
   const text = await file.text();
@@ -194,7 +199,9 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
         }
 
         for (const text of texts) {
-          const cmdMatch = text.match(/<command-name>(\/[^<]+)<\/command-name>/);
+          const cmdMatch = text.match(
+            /<command-name>(\/[^<]+)<\/command-name>/,
+          );
           if (!cmdMatch) continue;
           const cmd = cmdMatch[1]; // e.g. "/devg"
           if (BUILTIN_COMMANDS.has(cmd)) continue;
@@ -227,7 +234,7 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
             projectDir: dirName,
             projectPath: deriveProjectName(cwd),
             cwd,
-            triggerMessage: `/${skillName}${args ? " " + args : ""}`,
+            triggerMessage: `/${skillName}${args ? ` ${args}` : ""}`,
           };
           calls.push(call);
         }
@@ -265,7 +272,9 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
 
 const BATCH_SIZE = 20;
 
-export async function scanConversations(claudeDir: string): Promise<Conversation[]> {
+export async function scanConversations(
+  claudeDir: string,
+): Promise<Conversation[]> {
   const projectsDir = join(claudeDir, "projects");
   const conversations: Conversation[] = [];
 
@@ -305,13 +314,16 @@ export async function scanConversations(claudeDir: string): Promise<Conversation
 
   // Sort by lastTimestamp descending
   conversations.sort(
-    (a, b) => new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime(),
+    (a, b) =>
+      new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime(),
   );
 
   return conversations;
 }
 
-async function processJsonlForConversation(filePath: string): Promise<Conversation | null> {
+async function processJsonlForConversation(
+  filePath: string,
+): Promise<Conversation | null> {
   const dirName = basename(join(filePath, ".."));
   const sessionId = basename(filePath).replace(".jsonl", "");
 
@@ -348,8 +360,10 @@ async function processJsonlForConversation(filePath: string): Promise<Conversati
 
       messageCount++;
 
-      if (!firstTimestamp || timestamp < firstTimestamp) firstTimestamp = timestamp;
-      if (!lastTimestamp || timestamp > lastTimestamp) lastTimestamp = timestamp;
+      if (!firstTimestamp || timestamp < firstTimestamp)
+        firstTimestamp = timestamp;
+      if (!lastTimestamp || timestamp > lastTimestamp)
+        lastTimestamp = timestamp;
 
       if (!cwd && entry.cwd) cwd = entry.cwd as string;
 
@@ -385,13 +399,16 @@ async function processJsonlForConversation(filePath: string): Promise<Conversati
         if (msgText && userMessages.length < 100) {
           userMessages.push({
             timestamp,
-            content: msgText.length > 500 ? msgText.slice(0, 500) + "…" : msgText,
+            content:
+              msgText.length > 500 ? `${msgText.slice(0, 500)}…` : msgText,
           });
         }
 
         // Detect slash command skills in user messages
         if (msgText) {
-          const cmdMatch = msgText.match(/<command-name>(\/[^<]+)<\/command-name>/);
+          const cmdMatch = msgText.match(
+            /<command-name>(\/[^<]+)<\/command-name>/,
+          );
           if (cmdMatch) {
             const cmd = cmdMatch[1];
             if (!BUILTIN_COMMANDS.has(cmd)) {
@@ -406,10 +423,7 @@ async function processJsonlForConversation(filePath: string): Promise<Conversati
         const content = message.content;
         if (Array.isArray(content)) {
           for (const block of content as Record<string, unknown>[]) {
-            if (
-              block.type === "tool_use" &&
-              block.name === "Skill"
-            ) {
+            if (block.type === "tool_use" && block.name === "Skill") {
               const input = block.input as Record<string, unknown> | undefined;
               if (input?.skill) {
                 skillNames.add(input.skill as string);

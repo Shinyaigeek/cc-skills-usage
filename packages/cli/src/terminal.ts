@@ -9,7 +9,7 @@ function bar(value: number, max: number): string {
   const fullBlocks = Math.floor(ratio * MAX_BAR_WIDTH);
   const remainder = (ratio * MAX_BAR_WIDTH - fullBlocks) * 8;
   const partialChar =
-    remainder > 0 ? BAR_CHARS[Math.floor(remainder) - 1] ?? "" : "";
+    remainder > 0 ? (BAR_CHARS[Math.floor(remainder) - 1] ?? "") : "";
   return "█".repeat(fullBlocks) + partialChar;
 }
 
@@ -137,16 +137,17 @@ export function renderTerminal(result: AnalysisResult): void {
   // ── Conversation Overview ──
   if (result.conversationStats) {
     const cs = result.conversationStats;
-    const rate = cs.totalSessions > 0
-      ? ((cs.sessionsWithSkills / cs.totalSessions) * 100).toFixed(1)
-      : "0.0";
+    const rate =
+      cs.totalSessions > 0
+        ? ((cs.sessionsWithSkills / cs.totalSessions) * 100).toFixed(1)
+        : "0.0";
 
     header("Conversation Overview");
     console.log(
       `  Total sessions: ${bold(fmt(cs.totalSessions))}    ` +
         `With skills: ${bold(fmt(cs.sessionsWithSkills))}    ` +
         `Without skills: ${bold(fmt(cs.sessionsWithoutSkills))}    ` +
-        `Adoption rate: ${bold(rate + "%")}`,
+        `Adoption rate: ${bold(`${rate}%`)}`,
     );
 
     if (cs.projectBreakdown.length > 0) {
@@ -160,9 +161,10 @@ export function renderTerminal(result: AnalysisResult): void {
       );
       console.log(`  ${"─".repeat(nameWidth + 6 + 6 + 9 + 6 + 8)}`);
       for (const p of cs.projectBreakdown) {
-        const pRate = p.totalSessions > 0
-          ? ((p.sessionsWithSkills / p.totalSessions) * 100).toFixed(0) + "%"
-          : "0%";
+        const pRate =
+          p.totalSessions > 0
+            ? `${((p.sessionsWithSkills / p.totalSessions) * 100).toFixed(0)}%`
+            : "0%";
         console.log(
           `  ${p.projectName.padEnd(nameWidth)}  ${String(p.totalSessions).padStart(6)}  ${String(p.sessionsWithSkills).padStart(6)}  ${String(p.sessionsWithoutSkills).padStart(9)}  ${pRate.padStart(6)}`,
         );
@@ -177,11 +179,12 @@ export function renderTerminal(result: AnalysisResult): void {
       header(`Recent Sessions Without Skills (${noSkills.length})`);
       for (const c of noSkills) {
         const ts = c.lastTimestamp.replace("T", " ").slice(0, 19);
-        const preview = c.userMessages.length > 0
-          ? c.userMessages[0].content.slice(0, 80).replace(/\n/g, " ")
-          : "";
+        const preview =
+          c.userMessages.length > 0
+            ? c.userMessages[0].content.slice(0, 80).replace(/\n/g, " ")
+            : "";
         console.log(
-          `  ${dim(ts)}  ${c.projectPath.padEnd(30)}  ${dim(String(c.userMessageCount) + " msgs")}  ${dim(preview ? `"${preview}"` : "")}`,
+          `  ${dim(ts)}  ${c.projectPath.padEnd(30)}  ${dim(`${String(c.userMessageCount)} msgs`)}  ${dim(preview ? `"${preview}"` : "")}`,
         );
       }
     }

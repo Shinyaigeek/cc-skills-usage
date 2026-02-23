@@ -10,6 +10,14 @@
   "scripts": {
     "start": "bun packages/cli/src/index.ts",
     "dev": "bun --watch packages/cli/src/index.ts",
-    "build": "bun build packages/cli/src/index.ts --outfile dist/cli.js --target bun --minify"
+    "build": "bun build packages/cli/src/index.ts --outfile dist/cli.js --target bun --minify",
+    "check": "bunx biome check packages/",
+    "check:fix": "bunx biome check --write packages/",
+    "typecheck": "bunx tsc -b"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.4",
+    "bun-types": "^1.3.9",
+    "typescript": "^5.9.3"
   }
 }

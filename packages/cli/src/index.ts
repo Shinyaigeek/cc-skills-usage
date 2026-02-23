@@ -2,8 +2,13 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import type { CliOptions } from "@cc-skills-usage/core";
-import { getRegisteredSkills, scanSkillCalls, scanConversations, analyze } from "@cc-skills-usage/core";
+import type { CliOptions, Conversation } from "@cc-skills-usage/core";
+import {
+  analyze,
+  getRegisteredSkills,
+  scanConversations,
+  scanSkillCalls,
+} from "@cc-skills-usage/core";
 import { renderTerminal } from "./terminal.js";
 
 function printHelp(): void {
@@ -81,7 +86,7 @@ async function main(): Promise<void> {
     `\x1b[2mFound ${calls.length} skill calls across ${new Set(calls.map((c) => c.sessionId)).size} sessions\x1b[0m`,
   );
 
-  let conversations;
+  let conversations: Conversation[] | undefined;
   if (opts.conversations) {
     console.log("\x1b[2mScanning all conversations...\x1b[0m");
     conversations = await scanConversations(opts.claudeDir);

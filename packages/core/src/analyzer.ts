@@ -1,14 +1,14 @@
 import type {
-  CliOptions,
-  SkillCall,
-  RegisteredSkill,
   AnalysisResult,
-  SkillStats,
-  ProjectSkillStats,
-  DailyStats,
-  TokenStats,
+  CliOptions,
   Conversation,
   ConversationStats,
+  DailyStats,
+  ProjectSkillStats,
+  RegisteredSkill,
+  SkillCall,
+  SkillStats,
+  TokenStats,
 } from "./types.js";
 
 function toDateStr(ts: string): string {
@@ -25,10 +25,12 @@ export function analyze(
   let filtered = calls;
 
   if (opts.from) {
-    filtered = filtered.filter((c) => toDateStr(c.timestamp) >= opts.from!);
+    const from = opts.from;
+    filtered = filtered.filter((c) => toDateStr(c.timestamp) >= from);
   }
   if (opts.to) {
-    filtered = filtered.filter((c) => toDateStr(c.timestamp) <= opts.to!);
+    const to = opts.to;
+    filtered = filtered.filter((c) => toDateStr(c.timestamp) <= to);
   }
   if (opts.project) {
     const p = opts.project.toLowerCase();
@@ -40,9 +42,7 @@ export function analyze(
   }
   if (opts.skill) {
     const s = opts.skill.toLowerCase();
-    filtered = filtered.filter((c) =>
-      c.skillName.toLowerCase().includes(s),
-    );
+    filtered = filtered.filter((c) => c.skillName.toLowerCase().includes(s));
   }
 
   // ── Skill stats ──
@@ -57,10 +57,11 @@ export function analyze(
   // ── Project stats ──
   const projectMap = new Map<string, Map<string, number>>();
   for (const c of filtered) {
-    if (!projectMap.has(c.projectPath)) {
-      projectMap.set(c.projectPath, new Map());
+    let skills = projectMap.get(c.projectPath);
+    if (!skills) {
+      skills = new Map();
+      projectMap.set(c.projectPath, skills);
     }
-    const skills = projectMap.get(c.projectPath)!;
     skills.set(c.skillName, (skills.get(c.skillName) ?? 0) + 1);
   }
   const projectStats: ProjectSkillStats[] = [...projectMap.entries()]
@@ -80,8 +81,11 @@ export function analyze(
   const dailyMap = new Map<string, Map<string, number>>();
   for (const c of filtered) {
     const date = toDateStr(c.timestamp);
-    if (!dailyMap.has(date)) dailyMap.set(date, new Map());
-    const skills = dailyMap.get(date)!;
+    let skills = dailyMap.get(date);
+    if (!skills) {
+      skills = new Map();
+      dailyMap.set(date, skills);
+    }
     skills.set(c.skillName, (skills.get(c.skillName) ?? 0) + 1);
   }
   const dailyStats: DailyStats[] = [...dailyMap.entries()]
@@ -109,16 +113,17 @@ export function analyze(
   >();
   for (const c of filtered) {
     if (!c.usage) continue;
-    if (!tokenMap.has(c.skillName)) {
-      tokenMap.set(c.skillName, {
+    let t = tokenMap.get(c.skillName);
+    if (!t) {
+      t = {
         inputTokens: 0,
         outputTokens: 0,
         cacheCreateTokens: 0,
         cacheReadTokens: 0,
         callCount: 0,
-      });
+      };
+      tokenMap.set(c.skillName, t);
     }
-    const t = tokenMap.get(c.skillName)!;
     t.inputTokens += c.usage.input_tokens ?? 0;
     t.outputTokens += c.usage.output_tokens ?? 0;
     t.cacheCreateTokens += c.usage.cache_creation_input_tokens ?? 0;
@@ -127,7 +132,10 @@ export function analyze(
   }
   const tokenStats: TokenStats[] = [...tokenMap.entries()]
     .map(([skillName, t]) => ({ skillName, ...t }))
-    .sort((a, b) => b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens));
+    .sort(
+      (a, b) =>
+        b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens),
+    );
 
   // ── Unused skills ──
   const usedSkillNames = new Set(filtered.map((c) => c.skillName));
@@ -141,7 +149,9 @@ export function analyze(
 
   // ── Date range ──
   const timestamps = filtered.map((c) => c.timestamp);
-  const from = timestamps.length ? toDateStr(timestamps[timestamps.length - 1]) : "";
+  const from = timestamps.length
+    ? toDateStr(timestamps[timestamps.length - 1])
+    : "";
   const to = timestamps.length ? toDateStr(timestamps[0]) : "";
 
   // ── Conversations ──
@@ -153,13 +163,15 @@ export function analyze(
 
     // Apply from/to/project filters (but not --skill, since the point is to see sessions without skills)
     if (opts.from) {
+      const from = opts.from;
       filteredConversations = filteredConversations.filter(
-        (c) => toDateStr(c.firstTimestamp) >= opts.from!,
+        (c) => toDateStr(c.firstTimestamp) >= from,
       );
     }
     if (opts.to) {
+      const to = opts.to;
       filteredConversations = filteredConversations.filter(
-        (c) => toDateStr(c.lastTimestamp) <= opts.to!,
+        (c) => toDateStr(c.lastTimestamp) <= to,
       );
     }
     if (opts.project) {
@@ -172,7 +184,9 @@ export function analyze(
     }
 
     // Compute stats
-    const withSkills = filteredConversations.filter((c) => c.hasSkillCalls).length;
+    const withSkills = filteredConversations.filter(
+      (c) => c.hasSkillCalls,
+    ).length;
     const withoutSkills = filteredConversations.length - withSkills;
 
     // Project breakdown
@@ -182,10 +196,11 @@ export function analyze(
     >();
     for (const c of filteredConversations) {
       const name = c.projectPath;
-      if (!projMap.has(name)) {
-        projMap.set(name, { total: 0, withSkills: 0, withoutSkills: 0 });
+      let entry = projMap.get(name);
+      if (!entry) {
+        entry = { total: 0, withSkills: 0, withoutSkills: 0 };
+        projMap.set(name, entry);
       }
-      const entry = projMap.get(name)!;
       entry.total++;
       if (c.hasSkillCalls) entry.withSkills++;
       else entry.withoutSkills++;
