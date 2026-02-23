@@ -35,9 +35,7 @@ export function analyze(
   if (opts.project) {
     const p = opts.project.toLowerCase();
     filtered = filtered.filter(
-      (c) =>
-        c.projectPath.toLowerCase().includes(p) ||
-        c.projectDir.toLowerCase().includes(p),
+      (c) => c.projectPath.toLowerCase().includes(p) || c.projectDir.toLowerCase().includes(p),
     );
   }
   if (opts.skill) {
@@ -132,10 +130,7 @@ export function analyze(
   }
   const tokenStats: TokenStats[] = [...tokenMap.entries()]
     .map(([skillName, t]) => ({ skillName, ...t }))
-    .sort(
-      (a, b) =>
-        b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens),
-    );
+    .sort((a, b) => b.inputTokens + b.outputTokens - (a.inputTokens + a.outputTokens));
 
   // ── Unused skills ──
   const usedSkillNames = new Set(filtered.map((c) => c.skillName));
@@ -149,9 +144,7 @@ export function analyze(
 
   // ── Date range ──
   const timestamps = filtered.map((c) => c.timestamp);
-  const from = timestamps.length
-    ? toDateStr(timestamps[timestamps.length - 1])
-    : "";
+  const from = timestamps.length ? toDateStr(timestamps[timestamps.length - 1]) : "";
   const to = timestamps.length ? toDateStr(timestamps[0]) : "";
 
   // ── Conversations ──
@@ -170,30 +163,21 @@ export function analyze(
     }
     if (opts.to) {
       const to = opts.to;
-      filteredConversations = filteredConversations.filter(
-        (c) => toDateStr(c.lastTimestamp) <= to,
-      );
+      filteredConversations = filteredConversations.filter((c) => toDateStr(c.lastTimestamp) <= to);
     }
     if (opts.project) {
       const p = opts.project.toLowerCase();
       filteredConversations = filteredConversations.filter(
-        (c) =>
-          c.projectPath.toLowerCase().includes(p) ||
-          c.projectDir.toLowerCase().includes(p),
+        (c) => c.projectPath.toLowerCase().includes(p) || c.projectDir.toLowerCase().includes(p),
       );
     }
 
     // Compute stats
-    const withSkills = filteredConversations.filter(
-      (c) => c.hasSkillCalls,
-    ).length;
+    const withSkills = filteredConversations.filter((c) => c.hasSkillCalls).length;
     const withoutSkills = filteredConversations.length - withSkills;
 
     // Project breakdown
-    const projMap = new Map<
-      string,
-      { total: number; withSkills: number; withoutSkills: number }
-    >();
+    const projMap = new Map<string, { total: number; withSkills: number; withoutSkills: number }>();
     for (const c of filteredConversations) {
       const name = c.projectPath;
       let entry = projMap.get(name);

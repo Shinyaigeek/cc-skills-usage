@@ -2,10 +2,7 @@ import { exec } from "node:child_process";
 import type { AnalysisResult } from "@cc-skills-usage/core";
 import { generateDashboardHtml } from "./dashboard.html.js";
 
-export async function renderWeb(
-  result: AnalysisResult,
-  port: number,
-): Promise<void> {
+export async function renderWeb(result: AnalysisResult, port: number): Promise<void> {
   const html = generateDashboardHtml(result);
   const jsonData = JSON.stringify(result);
 

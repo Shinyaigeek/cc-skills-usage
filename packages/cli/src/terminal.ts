@@ -8,8 +8,7 @@ function bar(value: number, max: number): string {
   const ratio = value / max;
   const fullBlocks = Math.floor(ratio * MAX_BAR_WIDTH);
   const remainder = (ratio * MAX_BAR_WIDTH - fullBlocks) * 8;
-  const partialChar =
-    remainder > 0 ? (BAR_CHARS[Math.floor(remainder) - 1] ?? "") : "";
+  const partialChar = remainder > 0 ? (BAR_CHARS[Math.floor(remainder) - 1] ?? "") : "";
   return "█".repeat(fullBlocks) + partialChar;
 }
 
@@ -55,10 +54,7 @@ export function renderTerminal(result: AnalysisResult): void {
   if (result.skillStats.length > 0) {
     header("Skill Usage");
     const maxCount = result.skillStats[0].count;
-    const nameWidth = Math.max(
-      ...result.skillStats.map((s) => s.name.length),
-      10,
-    );
+    const nameWidth = Math.max(...result.skillStats.map((s) => s.name.length), 10);
     for (const s of result.skillStats) {
       const name = s.name.padEnd(nameWidth);
       const count = String(s.count).padStart(4);
@@ -88,9 +84,7 @@ export function renderTerminal(result: AnalysisResult): void {
         .map(([name, count]) => `${name}:${count}`)
         .join(", ");
       const b = bar(d.total, maxDaily);
-      console.log(
-        `  ${dim(d.date)}  ${String(d.total).padStart(3)}  ${b}  ${dim(skills)}`,
-      );
+      console.log(`  ${dim(d.date)}  ${String(d.total).padStart(3)}  ${b}  ${dim(skills)}`);
     }
   }
 
@@ -125,9 +119,7 @@ export function renderTerminal(result: AnalysisResult): void {
     for (const c of result.recentCalls) {
       const ts = c.timestamp.replace("T", " ").slice(0, 19);
       const args = c.args ? dim(` args="${c.args.slice(0, 60)}"`) : "";
-      const trigger = c.triggerMessage
-        ? dim(` ← "${c.triggerMessage.slice(0, 80)}"`)
-        : "";
+      const trigger = c.triggerMessage ? dim(` ← "${c.triggerMessage.slice(0, 80)}"`) : "";
       console.log(
         `  ${dim(ts)}  ${cyan(c.skillName.padEnd(22))}  ${c.projectPath}${args}${trigger}`,
       );
@@ -138,9 +130,7 @@ export function renderTerminal(result: AnalysisResult): void {
   if (result.conversationStats) {
     const cs = result.conversationStats;
     const rate =
-      cs.totalSessions > 0
-        ? ((cs.sessionsWithSkills / cs.totalSessions) * 100).toFixed(1)
-        : "0.0";
+      cs.totalSessions > 0 ? ((cs.sessionsWithSkills / cs.totalSessions) * 100).toFixed(1) : "0.0";
 
     header("Conversation Overview");
     console.log(
@@ -152,10 +142,7 @@ export function renderTerminal(result: AnalysisResult): void {
 
     if (cs.projectBreakdown.length > 0) {
       console.log();
-      const nameWidth = Math.max(
-        ...cs.projectBreakdown.map((p) => p.projectName.length),
-        10,
-      );
+      const nameWidth = Math.max(...cs.projectBreakdown.map((p) => p.projectName.length), 10);
       console.log(
         `  ${"Project".padEnd(nameWidth)}  ${"Total".padStart(6)}  ${"Skills".padStart(6)}  ${"No Skills".padStart(9)}  ${"Rate".padStart(6)}`,
       );

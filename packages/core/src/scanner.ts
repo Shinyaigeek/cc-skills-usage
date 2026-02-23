@@ -64,8 +64,7 @@ function extractUsage(msg: MinimalMessage): MessageUsage | undefined {
   return {
     input_tokens: (usage.input_tokens as number) ?? 0,
     output_tokens: (usage.output_tokens as number) ?? 0,
-    cache_creation_input_tokens:
-      (usage.cache_creation_input_tokens as number) ?? 0,
+    cache_creation_input_tokens: (usage.cache_creation_input_tokens as number) ?? 0,
     cache_read_input_tokens: (usage.cache_read_input_tokens as number) ?? 0,
   };
 }
@@ -78,9 +77,7 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
   let _projectDirs: string[];
   try {
     const entries = await readdir(projectsDir, { withFileTypes: true });
-    _projectDirs = entries
-      .filter((e) => e.isDirectory())
-      .map((e) => join(projectsDir, e.name));
+    _projectDirs = entries.filter((e) => e.isDirectory()).map((e) => join(projectsDir, e.name));
   } catch {
     return [];
   }
@@ -108,9 +105,7 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
   }
 
   // Sort by timestamp descending
-  allCalls.sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-  );
+  allCalls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return allCalls;
 }
@@ -199,9 +194,7 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
         }
 
         for (const text of texts) {
-          const cmdMatch = text.match(
-            /<command-name>(\/[^<]+)<\/command-name>/,
-          );
+          const cmdMatch = text.match(/<command-name>(\/[^<]+)<\/command-name>/);
           if (!cmdMatch) continue;
           const cmd = cmdMatch[1]; // e.g. "/devg"
           if (BUILTIN_COMMANDS.has(cmd)) continue;
@@ -217,9 +210,7 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
           // Extract args from <command-message> if present
           let args: string | undefined;
           for (const t of texts) {
-            const argsMatch = t.match(
-              /<command-message>(.*?)<\/command-message>/s,
-            );
+            const argsMatch = t.match(/<command-message>(.*?)<\/command-message>/s);
             if (argsMatch && argsMatch[1] !== skillName) {
               args = argsMatch[1].trim() || undefined;
             }
@@ -254,9 +245,7 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
   const toolUseCalls = calls.filter((c) => !c.triggerMessage?.startsWith("/"));
   const slashCalls = calls.filter((c) => c.triggerMessage?.startsWith("/"));
 
-  const slashKeys = new Set(
-    slashCalls.map((c) => `${c.sessionId}:${c.skillName}`),
-  );
+  const slashKeys = new Set(slashCalls.map((c) => `${c.sessionId}:${c.skillName}`));
 
   for (const c of toolUseCalls) {
     const key = `${c.sessionId}:${c.skillName}`;
@@ -272,18 +261,14 @@ async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
 
 const BATCH_SIZE = 20;
 
-export async function scanConversations(
-  claudeDir: string,
-): Promise<Conversation[]> {
+export async function scanConversations(claudeDir: string): Promise<Conversation[]> {
   const projectsDir = join(claudeDir, "projects");
   const conversations: Conversation[] = [];
 
   let projectDirs: string[];
   try {
     const entries = await readdir(projectsDir, { withFileTypes: true });
-    projectDirs = entries
-      .filter((e) => e.isDirectory())
-      .map((e) => join(projectsDir, e.name));
+    projectDirs = entries.filter((e) => e.isDirectory()).map((e) => join(projectsDir, e.name));
   } catch {
     return [];
   }
@@ -314,16 +299,13 @@ export async function scanConversations(
 
   // Sort by lastTimestamp descending
   conversations.sort(
-    (a, b) =>
-      new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime(),
+    (a, b) => new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime(),
   );
 
   return conversations;
 }
 
-async function processJsonlForConversation(
-  filePath: string,
-): Promise<Conversation | null> {
+async function processJsonlForConversation(filePath: string): Promise<Conversation | null> {
   const dirName = basename(join(filePath, ".."));
   const sessionId = basename(filePath).replace(".jsonl", "");
 
@@ -360,10 +342,8 @@ async function processJsonlForConversation(
 
       messageCount++;
 
-      if (!firstTimestamp || timestamp < firstTimestamp)
-        firstTimestamp = timestamp;
-      if (!lastTimestamp || timestamp > lastTimestamp)
-        lastTimestamp = timestamp;
+      if (!firstTimestamp || timestamp < firstTimestamp) firstTimestamp = timestamp;
+      if (!lastTimestamp || timestamp > lastTimestamp) lastTimestamp = timestamp;
 
       if (!cwd && entry.cwd) cwd = entry.cwd as string;
 
@@ -399,16 +379,13 @@ async function processJsonlForConversation(
         if (msgText && userMessages.length < 100) {
           userMessages.push({
             timestamp,
-            content:
-              msgText.length > 500 ? `${msgText.slice(0, 500)}…` : msgText,
+            content: msgText.length > 500 ? `${msgText.slice(0, 500)}…` : msgText,
           });
         }
 
         // Detect slash command skills in user messages
         if (msgText) {
-          const cmdMatch = msgText.match(
-            /<command-name>(\/[^<]+)<\/command-name>/,
-          );
+          const cmdMatch = msgText.match(/<command-name>(\/[^<]+)<\/command-name>/);
           if (cmdMatch) {
             const cmd = cmdMatch[1];
             if (!BUILTIN_COMMANDS.has(cmd)) {
