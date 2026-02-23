@@ -13,7 +13,7 @@ Run the CLI analyzer for Claude Code skill usage and display the results.
 Execute the following command using the Bash tool:
 
 ```bash
-bun /Users/shinobu.hayashi/Documents/s9k/cc-skills-usage/packages/cli/src/index.ts [user-specified options]
+npx cc-skills-usage [user-specified options]
 ```
 
 If the user provides arguments, pass them directly to the command. If no arguments are given, run without options.

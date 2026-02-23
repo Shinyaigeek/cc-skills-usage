@@ -21,7 +21,7 @@ If no argument is provided, ask the user for the skill name.
 Execute the following command using the Bash tool and capture the output:
 
 ```bash
-bun /Users/shinobu.hayashi/Documents/s9k/cc-skills-usage/packages/cli/src/index.ts --conversations --skill <skill-name>
+npx cc-skills-usage --conversations --skill <skill-name>
 ```
 
 The output includes the following data:
