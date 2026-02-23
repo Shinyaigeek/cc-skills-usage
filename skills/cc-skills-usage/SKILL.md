@@ -1,47 +1,47 @@
 ---
 name: cc-skills-usage
-description: Claude Code のスキル利用状況を分析してターミナルに表示する。利用頻度、プロジェクト別統計、トークン使用量などを確認できる。
+description: Analyze Claude Code skill usage and display results in the terminal. View usage frequency, per-project statistics, token consumption, and more.
 argument-hint: "[options]"
 ---
 
 # cc-skills-usage
 
-Claude Code のスキル利用状況を分析するCLIを実行し、結果を表示する。
+Run the CLI analyzer for Claude Code skill usage and display the results.
 
-## 実行方法
+## How to Run
 
-以下のコマンドを Bash ツールで実行する:
+Execute the following command using the Bash tool:
 
 ```bash
-bun /Users/shinobu.hayashi/Documents/s9k/cc-skills-usage/packages/cli/src/index.ts [ユーザー指定のオプション]
+bun /Users/shinobu.hayashi/Documents/s9k/cc-skills-usage/packages/cli/src/index.ts [user-specified options]
 ```
 
-ユーザーが引数を指定した場合は、そのままコマンドに渡す。引数がない場合はオプションなしで実行する。
+If the user provides arguments, pass them directly to the command. If no arguments are given, run without options.
 
-## 利用可能なオプション
+## Available Options
 
-| オプション | 短縮 | 説明 |
+| Option | Short | Description |
 |---|---|---|
-| `--from <date>` | | 開始日フィルタ (YYYY-MM-DD) |
-| `--to <date>` | | 終了日フィルタ (YYYY-MM-DD) |
-| `--project <name>` | `-p` | プロジェクトパスの部分一致フィルタ |
-| `--skill <name>` | `-s` | スキル名フィルタ |
-| `--output <mode>` | `-o` | `terminal` (デフォルト) または `web` |
-| `--limit <number>` | `-n` | 表示する最近の呼び出し数 (デフォルト: 50) |
-| `--port <number>` | | Web サーバーポート (デフォルト: 3939) |
-| `--conversations` | | 全セッションデータを含める |
-| `--claude-dir <path>` | | ~/.claude の場所を上書き |
+| `--from <date>` | | Start date filter (YYYY-MM-DD) |
+| `--to <date>` | | End date filter (YYYY-MM-DD) |
+| `--project <name>` | `-p` | Partial match filter on project path |
+| `--skill <name>` | `-s` | Skill name filter |
+| `--output <mode>` | `-o` | `terminal` (default) or `web` |
+| `--limit <number>` | `-n` | Number of recent calls to display (default: 50) |
+| `--port <number>` | | Web server port (default: 3939) |
+| `--conversations` | | Include all session data |
+| `--claude-dir <path>` | | Override ~/.claude location |
 
-## 使用例
+## Usage Examples
 
-- `/cc-skills-usage` — 全スキルの利用状況を表示
-- `/cc-skills-usage --from 2025-06-01` — 6月1日以降の利用状況
-- `/cc-skills-usage --skill devg` — devg スキルの利用状況のみ
-- `/cc-skills-usage --project myapp --from 2025-06-01` — 特定プロジェクト・期間でフィルタ
-- `/cc-skills-usage --output web` — ブラウザでダッシュボードを表示
-- `/cc-skills-usage --conversations` — 全会話データ含む詳細分析
+- `/cc-skills-usage` — Show usage stats for all skills
+- `/cc-skills-usage --from 2025-06-01` — Usage since June 1st
+- `/cc-skills-usage --skill devg` — Usage for the devg skill only
+- `/cc-skills-usage --project myapp --from 2025-06-01` — Filter by project and date range
+- `/cc-skills-usage --output web` — Open dashboard in browser
+- `/cc-skills-usage --conversations` — Detailed analysis including all conversation data
 
-## 注意事項
+## Notes
 
-- コマンドの出力をそのままユーザーに表示する。出力の加工や要約は行わない。
-- `--output web` の場合、ブラウザが自動で開く。
+- Display the command output as-is to the user. Do not modify or summarize the output.
+- When using `--output web`, the browser opens automatically.

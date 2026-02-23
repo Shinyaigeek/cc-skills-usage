@@ -1,105 +1,105 @@
 ---
 name: analyze-skill
-description: 特定のスキルの利用データを分析し、trigger/prompt の改善提案を行う。スキルの利用パターン、見逃されているトリガー、SKILL.md の改善点を特定する。
+description: Analyze usage data for a specific skill and suggest improvements to its triggers and prompt. Identify usage patterns, missed triggers, and areas for SKILL.md improvement.
 argument-hint: "[skill-name]"
 ---
 
 # analyze-skill
 
-指定されたスキルの利用状況を分析し、SKILL.md の trigger/prompt 改善提案を出力する。
+Analyze the usage of a specified skill and output improvement suggestions for its SKILL.md triggers and prompt.
 
-## 引数
+## Arguments
 
-- `skill-name` (必須): 分析対象のスキル名（例: `devg`, `review-pr`）
+- `skill-name` (required): The name of the skill to analyze (e.g., `devg`, `review-pr`)
 
-引数が指定されていない場合は、ユーザーにスキル名を尋ねる。
+If no argument is provided, ask the user for the skill name.
 
-## 実行手順
+## Execution Steps
 
-### Step 1: 利用データの取得
+### Step 1: Retrieve Usage Data
 
-以下のコマンドを Bash ツールで実行し、出力を取得する:
+Execute the following command using the Bash tool and capture the output:
 
 ```bash
 bun /Users/shinobu.hayashi/Documents/s9k/cc-skills-usage/packages/cli/src/index.ts --conversations --skill <skill-name>
 ```
 
-出力には以下のデータが含まれる:
-- **Skill Stats**: 利用回数
-- **Daily Stats**: 日別の利用数
-- **Project Stats**: プロジェクト別の利用数
-- **Token Stats**: トークン消費量
-- **Recent Calls**: 最近の呼び出し（triggerMessage 付き）
-- **Conversation Stats**: 全セッション中のスキル利用率
-- **Recent Conversations**: スキル未使用のセッションのユーザー発話
+The output includes the following data:
+- **Skill Stats**: Number of invocations
+- **Daily Stats**: Daily usage counts
+- **Project Stats**: Per-project usage counts
+- **Token Stats**: Token consumption
+- **Recent Calls**: Recent invocations (with triggerMessage)
+- **Conversation Stats**: Skill usage rate across all sessions
+- **Recent Conversations**: User messages from sessions where the skill was not used
 
-### Step 2: スキル定義の読み取り
+### Step 2: Read Skill Definition
 
-Read ツールで `~/.claude/skills/<skill-name>/SKILL.md` を読み取る。ファイルが見つからない場合は、`~/.claude/skills/` 配下を Glob で検索してスキルのディレクトリを特定する。
+Use the Read tool to read `~/.claude/skills/<skill-name>/SKILL.md`. If the file is not found, use Glob to search under `~/.claude/skills/` to locate the skill directory.
 
-### Step 3: 分析
+### Step 3: Analysis
 
-以下の観点で分析を行う:
+Perform analysis from the following perspectives:
 
-#### 3a. 使われた場面の分析
-- Recent Calls の `triggerMessage` から、どんなユーザー発話でスキルが呼ばれているかをパターン分類する
-- よく使われるキーワード・フレーズを抽出する
+#### 3a. Analysis of When the Skill Was Used
+- Categorize user messages that triggered the skill from the `triggerMessage` field in Recent Calls
+- Extract frequently used keywords and phrases
 
-#### 3b. 使われなかった場面の分析
-- `conversations` のうちスキル未使用のセッション（`hasSkillCalls: false` または対象スキルが `skillsUsed` に含まれないセッション）を確認する
-- それらのセッションの `userMessages` を見て、本来このスキルが使えたはずのユーザー発話がないかを探す
-- 見逃しパターンを特定する
+#### 3b. Analysis of When the Skill Was NOT Used
+- Review sessions where the skill was not used (`hasSkillCalls: false` or the target skill is not in `skillsUsed`)
+- Examine `userMessages` from those sessions to find cases where the skill could have been applicable
+- Identify missed trigger patterns
 
-#### 3c. 利用頻度・トレンド分析
-- `dailyStats` から利用頻度の推移を確認する
-- `projectStats` からどのプロジェクトでよく使われているかを確認する
+#### 3c. Usage Frequency and Trend Analysis
+- Review usage frequency trends from `dailyStats`
+- Identify which projects use the skill most from `projectStats`
 
-#### 3d. Adoption rate 分析
-- `conversationStats` から:
-  - 全セッション数に対するスキル利用セッションの割合
-  - プロジェクト別の普及率
+#### 3d. Adoption Rate Analysis
+- From `conversationStats`:
+  - Percentage of sessions that used the skill out of total sessions
+  - Per-project adoption rate
 
-### Step 4: 改善提案の出力
+### Step 4: Output Improvement Suggestions
 
-分析結果を以下の構成でテキスト出力する:
+Output the analysis results in the following format:
 
 ```
-## 📊 スキル分析レポート: <skill-name>
+## Skill Analysis Report: <skill-name>
 
-### 現在の利用状況
-- 総呼び出し回数: X回
-- 利用セッション率: X% (Y/Z セッション)
-- 主な利用プロジェクト: ...
-- 利用トレンド: (増加傾向/安定/減少傾向)
+### Current Usage
+- Total invocations: X
+- Session usage rate: X% (Y/Z sessions)
+- Primary projects: ...
+- Usage trend: (increasing/stable/decreasing)
 
-### 使われた場面
-- パターン1: 「...」のような発話 (X回)
-- パターン2: 「...」のような発話 (Y回)
+### When the Skill Was Used
+- Pattern 1: Messages like "..." (X times)
+- Pattern 2: Messages like "..." (Y times)
 - ...
 
-### 見逃された場面
-- 「...」というユーザー発話でスキルが呼ばれなかった (セッション: ...)
+### Missed Opportunities
+- User message "..." did not trigger the skill (session: ...)
 - ...
 
-### 改善提案
+### Improvement Suggestions
 
-#### Trigger キーワードの追加
-現在の SKILL.md では捕捉できていない発話パターンに基づき、以下のトリガーキーワードを追加することを提案:
-- `キーワード1` — 理由: ...
-- `キーワード2` — 理由: ...
+#### Add Trigger Keywords
+Based on message patterns not currently captured by the SKILL.md, the following trigger keywords are suggested:
+- `keyword1` — Reason: ...
+- `keyword2` — Reason: ...
 
-#### Description の改善
-現在: 「...」
-提案: 「...」
-理由: ...
+#### Improve Description
+Current: "..."
+Suggested: "..."
+Reason: ...
 
-#### Prompt (SKILL.md 本文) の改善
-- 改善点1: ...
-- 改善点2: ...
+#### Improve Prompt (SKILL.md Body)
+- Improvement 1: ...
+- Improvement 2: ...
 ```
 
-## 注意事項
+## Notes
 
-- データが少ない場合（呼び出し回数が5回未満など）は、その旨を明記した上で可能な範囲で分析する。
-- スキルが一度も使われていない場合は、SKILL.md の内容のみから改善提案を行う。
-- 改善提案は具体的かつ実行可能な内容にする。抽象的なアドバイスは避ける。
+- If data is limited (e.g., fewer than 5 invocations), state this explicitly and analyze as much as possible.
+- If the skill has never been used, provide improvement suggestions based solely on the SKILL.md content.
+- Suggestions must be specific and actionable. Avoid abstract advice.
