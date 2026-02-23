@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";

@@ -1,11 +1,15 @@
 {
   "name": "cc-skills-usage",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.0.0",
   "type": "module",
+  "bin": {
+    "cc-skills-usage": "./dist/cli.js"
+  },
+  "files": ["dist"],
   "workspaces": ["packages/*"],
   "scripts": {
     "start": "bun packages/cli/src/index.ts",
-    "dev": "bun --watch packages/cli/src/index.ts"
+    "dev": "bun --watch packages/cli/src/index.ts",
+    "build": "bun build packages/cli/src/index.ts --outfile dist/cli.js --target bun --minify"
   }
 }
