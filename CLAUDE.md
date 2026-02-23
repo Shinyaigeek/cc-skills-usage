@@ -12,7 +12,7 @@ cc-skills-usage is a Claude Code skill usage analytics tool. It scans Claude Cod
 # Run the analyzer
 bun run start
 # or directly:
-bun packages/cli/src/index.ts
+bunx cc-skills-usage
 
 # Run in watch mode during development
 bun run dev
