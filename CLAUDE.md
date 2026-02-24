@@ -27,7 +27,7 @@ bun run start -- --port 8080        # Custom port for web server
 bun run start -- --claude-dir /path # Custom Claude directory
 ```
 
-No build step is required — Bun executes TypeScript directly. There are no tests or linting configured.
+No build step is required — Bun executes TypeScript directly. Tests are run with `bun test`. No linting is configured.
 
 ## Architecture
 
@@ -50,11 +50,11 @@ web → core (types)
 ### Pipeline stages
 
 1. **Skills Registry** (`packages/core/src/skills.ts`) — Reads registered skills from `~/.claude/skills/` directory (supports symlinks)
-2. **Scanner** (`packages/core/src/scanner.ts`) — Parses JSONL message files, detects skill calls via two mechanisms: Skill tool_use in assistant messages and `<command-name>` tags in user messages. Uses `grep` pre-filtering for performance. Filters out 26 builtin CLI commands. Deduplicates when the same skill is detected by both mechanisms.
+2. **Scanner** (`packages/core/src/scanner.ts`) — Parses JSONL message files, detects skill calls via two mechanisms: Skill tool_use in assistant messages and `<command-name>` tags in user messages. Uses `grep` pre-filtering for performance. Slash commands are matched against the registered skills allowlist (from step 1). Deduplicates when the same skill is detected by both mechanisms.
 3. **Analyzer** (`packages/core/src/analyzer.ts`) — Aggregates statistics by skill, project, date, and token usage. Applies CLI filters.
 4. **Renderers** — Terminal renderer (`packages/cli/src/terminal.ts`) for CLI output; Web renderer (`packages/web/src/server.ts`) serves an HTML dashboard with embedded Chart.js visualizations and auto-opens the browser.
 
-Data flows: `cli/src/index.ts` → `core` (skills → scanner → analyzer) → `cli/terminal.ts` or `web/server.ts`
+Data flows: `cli/src/index.ts` → `core` (skills registry → scanner(with registered skill names) → analyzer) → `cli/terminal.ts` or `web/server.ts`
 
 ## Key Types
 
