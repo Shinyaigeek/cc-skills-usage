@@ -9,12 +9,6 @@ import type {
   SkillCall,
 } from "./types.js";
 
-export function deriveProjectName(cwd: string): string {
-  const docsIdx = cwd.indexOf("/Documents/");
-  if (docsIdx !== -1) return cwd.slice(docsIdx + "/Documents/".length);
-  return cwd;
-}
-
 export function extractUserTrigger(
   msgs: Map<string, MinimalMessage>,
   parentUuid: string | null,
@@ -149,7 +143,7 @@ export async function processJsonlFile(
               timestamp: msg.timestamp,
               sessionId: msg.sessionId ?? sessionId,
               projectDir: dirName,
-              projectPath: deriveProjectName(cwd),
+              projectPath: cwd,
               cwd,
               triggerMessage: extractUserTrigger(messageMap, msg.parentUuid),
               usage: extractUsage(msg),
@@ -204,7 +198,7 @@ export async function processJsonlFile(
             timestamp: msg.timestamp,
             sessionId: msg.sessionId ?? sessionId,
             projectDir: dirName,
-            projectPath: deriveProjectName(cwd),
+            projectPath: cwd,
             cwd,
             triggerMessage: `/${skillName}${args ? ` ${args}` : ""}`,
           };
@@ -410,7 +404,7 @@ export async function processJsonlForConversation(
   return {
     sessionId,
     projectDir: dirName,
-    projectPath: deriveProjectName(cwd || dirName),
+    projectPath: cwd || dirName,
     firstTimestamp,
     lastTimestamp,
     messageCount,

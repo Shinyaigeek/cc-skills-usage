@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { MinimalMessage } from "../types.js";
 import {
-  deriveProjectName,
   extractUsage,
   extractUserTrigger,
   processJsonlFile,
@@ -10,24 +9,6 @@ import {
 } from "../scanner.js";
 
 const FIXTURES_DIR = join(import.meta.dir, "fixtures");
-
-describe("deriveProjectName", () => {
-  test("extracts path after /Documents/", () => {
-    expect(deriveProjectName("/Users/dev/Documents/my-project")).toBe("my-project");
-  });
-
-  test("extracts nested path after /Documents/", () => {
-    expect(deriveProjectName("/Users/dev/Documents/org/my-project")).toBe("org/my-project");
-  });
-
-  test("returns full path when /Documents/ is absent", () => {
-    expect(deriveProjectName("/var/data/my-project")).toBe("/var/data/my-project");
-  });
-
-  test("handles empty string", () => {
-    expect(deriveProjectName("")).toBe("");
-  });
-});
 
 describe("extractUserTrigger", () => {
   test("returns user message content from parent chain", () => {
@@ -154,7 +135,7 @@ describe("processJsonlFile", () => {
     expect(calls[0].skillName).toBe("commit");
     expect(calls[0].args).toBe("-m 'fix bug'");
     expect(calls[0].sessionId).toBe("sess-1");
-    expect(calls[0].projectPath).toBe("my-project");
+    expect(calls[0].projectPath).toBe("/Users/dev/Documents/my-project");
     expect(calls[0].usage).toBeDefined();
     expect(calls[0].usage!.input_tokens).toBe(100);
   });
