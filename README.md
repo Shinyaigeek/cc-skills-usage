@@ -11,7 +11,7 @@ Scans JSONL conversation history stored in `~/.claude/projects/`, and aggregates
 ## Usage
 
 ```bash
-bun src/index.ts
+bunx cc-skills-usage@latest
 ```
 
 ### Options
@@ -32,16 +32,32 @@ bun src/index.ts
 
 ```bash
 # Display in terminal
-bun src/index.ts
+bunx cc-skills-usage@latest
 
 # Display as web dashboard (automatically opens browser)
-bun src/index.ts --output web
+bunx cc-skills-usage@latest --output web
 
 # Filter by date range and skill name
-bun src/index.ts --from 2025-06-01 --to 2025-06-30 --skill review-pr
+bunx cc-skills-usage@latest --from 2025-06-01 --to 2025-06-30 --skill review-pr
 
 # Check usage for a specific project
-bun src/index.ts --project my-app
+bunx cc-skills-usage@latest --project my-app
+```
+
+## Claude Code Skills
+
+This package ships two Claude Code skills that can be invoked as slash commands.
+
+| Skill | Command | Description |
+|---|---|---|
+| **cc-skills-usage** | `/cc-skills-usage` | Run the analyzer and display skill usage stats directly in your Claude Code session |
+| **analyze-skill** | `/analyze-skill <name>` | Analyze a specific skill's usage data, identify missed triggers, and suggest improvements to its SKILL.md |
+
+### Install
+
+```bash
+bunx skills add shinyaigeek/cc-skills-usage/skills/cc-skills-usage
+bunx skills add shinyaigeek/cc-skills-usage/skills/analyze-skill
 ```
 
 ## Skill Detection
