@@ -9,28 +9,6 @@ import type {
   SkillCall,
 } from "./types.js";
 
-// Built-in CLI commands that are NOT skills
-const BUILTIN_COMMANDS = new Set([
-  "/clear",
-  "/compact",
-  "/config",
-  "/cost",
-  "/doctor",
-  "/help",
-  "/init",
-  "/login",
-  "/logout",
-  "/memory",
-  "/model",
-  "/permissions",
-  "/plugin",
-  "/resume",
-  "/skills",
-  "/status",
-  "/terminal-setup",
-  "/vim",
-]);
-
 export function deriveProjectName(cwd: string): string {
   const docsIdx = cwd.indexOf("/Documents/");
   if (docsIdx !== -1) return cwd.slice(docsIdx + "/Documents/".length);
@@ -69,7 +47,10 @@ export function extractUsage(msg: MinimalMessage): MessageUsage | undefined {
   };
 }
 
-export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
+export async function scanSkillCalls(
+  claudeDir: string,
+  registeredSkillNames: Set<string>,
+): Promise<SkillCall[]> {
   const projectsDir = join(claudeDir, "projects");
   const allCalls: SkillCall[] = [];
 
@@ -100,7 +81,7 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
 
   // Process each candidate file
   for (const filePath of candidateFiles) {
-    const calls = await processJsonlFile(filePath);
+    const calls = await processJsonlFile(filePath, registeredSkillNames);
     allCalls.push(...calls);
   }
 
@@ -110,7 +91,10 @@ export async function scanSkillCalls(claudeDir: string): Promise<SkillCall[]> {
   return allCalls;
 }
 
-export async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
+export async function processJsonlFile(
+  filePath: string,
+  registeredSkillNames: Set<string>,
+): Promise<SkillCall[]> {
   const calls: SkillCall[] = [];
   const messageMap = new Map<string, MinimalMessage>();
   const seenSlashCmds = new Set<string>();
@@ -196,11 +180,8 @@ export async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
         for (const text of texts) {
           const cmdMatch = text.match(/<command-name>(\/[^<]+)<\/command-name>/);
           if (!cmdMatch) continue;
-          const cmd = cmdMatch[1]; // e.g. "/example-skill"
-          if (BUILTIN_COMMANDS.has(cmd)) continue;
-
-          // This is a skill slash command
-          const skillName = cmd.slice(1); // remove leading "/"
+          const skillName = cmdMatch[1].slice(1); // remove leading "/"
+          if (!registeredSkillNames.has(skillName)) continue;
           // Avoid duplicates: skip if we already recorded this via Skill tool_use
           // (the Skill tool_use and command-name can appear in the same session
           //  but the command-name is the user-initiated entry point)
@@ -261,7 +242,10 @@ export async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
 
 const BATCH_SIZE = 20;
 
-export async function scanConversations(claudeDir: string): Promise<Conversation[]> {
+export async function scanConversations(
+  claudeDir: string,
+  registeredSkillNames: Set<string>,
+): Promise<Conversation[]> {
   const projectsDir = join(claudeDir, "projects");
   const conversations: Conversation[] = [];
 
@@ -291,7 +275,9 @@ export async function scanConversations(claudeDir: string): Promise<Conversation
   // Process in batches
   for (let i = 0; i < allFiles.length; i += BATCH_SIZE) {
     const batch = allFiles.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(batch.map(processJsonlForConversation));
+    const results = await Promise.all(
+      batch.map((f) => processJsonlForConversation(f, registeredSkillNames)),
+    );
     for (const conv of results) {
       if (conv) conversations.push(conv);
     }
@@ -305,7 +291,10 @@ export async function scanConversations(claudeDir: string): Promise<Conversation
   return conversations;
 }
 
-export async function processJsonlForConversation(filePath: string): Promise<Conversation | null> {
+export async function processJsonlForConversation(
+  filePath: string,
+  registeredSkillNames: Set<string>,
+): Promise<Conversation | null> {
   const dirName = basename(join(filePath, ".."));
   const sessionId = basename(filePath).replace(".jsonl", "");
 
@@ -387,9 +376,9 @@ export async function processJsonlForConversation(filePath: string): Promise<Con
         if (msgText) {
           const cmdMatch = msgText.match(/<command-name>(\/[^<]+)<\/command-name>/);
           if (cmdMatch) {
-            const cmd = cmdMatch[1];
-            if (!BUILTIN_COMMANDS.has(cmd)) {
-              skillNames.add(cmd.slice(1));
+            const name = cmdMatch[1].slice(1);
+            if (registeredSkillNames.has(name)) {
+              skillNames.add(name);
             }
           }
         }

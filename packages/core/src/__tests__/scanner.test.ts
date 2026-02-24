@@ -146,7 +146,10 @@ describe("extractUsage", () => {
 
 describe("processJsonlFile", () => {
   test("extracts Skill tool_use calls", async () => {
-    const calls = await processJsonlFile(join(FIXTURES_DIR, "skill-tooluse.jsonl"));
+    const calls = await processJsonlFile(
+      join(FIXTURES_DIR, "skill-tooluse.jsonl"),
+      new Set(["commit"]),
+    );
     expect(calls).toHaveLength(1);
     expect(calls[0].skillName).toBe("commit");
     expect(calls[0].args).toBe("-m 'fix bug'");
@@ -157,7 +160,10 @@ describe("processJsonlFile", () => {
   });
 
   test("extracts slash command calls", async () => {
-    const calls = await processJsonlFile(join(FIXTURES_DIR, "slash-command.jsonl"));
+    const calls = await processJsonlFile(
+      join(FIXTURES_DIR, "slash-command.jsonl"),
+      new Set(["review-pr"]),
+    );
     expect(calls).toHaveLength(1);
     expect(calls[0].skillName).toBe("review-pr");
     expect(calls[0].args).toBe("123");
@@ -165,22 +171,25 @@ describe("processJsonlFile", () => {
   });
 
   test("deduplicates when both tool_use and slash command present", async () => {
-    const calls = await processJsonlFile(join(FIXTURES_DIR, "mixed.jsonl"));
+    const calls = await processJsonlFile(
+      join(FIXTURES_DIR, "mixed.jsonl"),
+      new Set(["example-skill"]),
+    );
     // Should keep slash command entry and discard tool_use duplicate
     expect(calls).toHaveLength(1);
     expect(calls[0].skillName).toBe("example-skill");
     expect(calls[0].triggerMessage).toBe("/example-skill help me debug");
   });
 
-  test("filters out builtin commands", async () => {
-    // Create a temporary fixture with builtin command
+  test("filters out unregistered slash commands", async () => {
+    // Create a temporary fixture with a command not in the registered skills
     const tmpDir = join(import.meta.dir, "fixtures");
-    const tmpFile = join(tmpDir, "_test-builtin.jsonl");
+    const tmpFile = join(tmpDir, "_test-unregistered.jsonl");
     const content = `{"uuid":"u1","parentUuid":null,"type":"user","timestamp":"2025-06-01T10:00:00Z","cwd":"/tmp","sessionId":"sess-b","message":{"role":"user","content":"<command-name>/help</command-name>"}}`;
     await Bun.write(tmpFile, content);
 
     try {
-      const calls = await processJsonlFile(tmpFile);
+      const calls = await processJsonlFile(tmpFile, new Set(["some-other-skill"]));
       expect(calls).toHaveLength(0);
     } finally {
       const { unlink } = await import("node:fs/promises");
@@ -191,7 +200,10 @@ describe("processJsonlFile", () => {
 
 describe("processJsonlForConversation", () => {
   test("extracts conversation metadata", async () => {
-    const conv = await processJsonlForConversation(join(FIXTURES_DIR, "skill-tooluse.jsonl"));
+    const conv = await processJsonlForConversation(
+      join(FIXTURES_DIR, "skill-tooluse.jsonl"),
+      new Set(["commit"]),
+    );
     expect(conv).not.toBeNull();
     expect(conv!.sessionId).toBe("skill-tooluse");
     expect(conv!.messageCount).toBe(2);
@@ -201,14 +213,20 @@ describe("processJsonlForConversation", () => {
   });
 
   test("detects slash command skills in conversations", async () => {
-    const conv = await processJsonlForConversation(join(FIXTURES_DIR, "slash-command.jsonl"));
+    const conv = await processJsonlForConversation(
+      join(FIXTURES_DIR, "slash-command.jsonl"),
+      new Set(["review-pr"]),
+    );
     expect(conv).not.toBeNull();
     expect(conv!.hasSkillCalls).toBe(true);
     expect(conv!.skillsUsed).toContain("review-pr");
   });
 
   test("collects user messages", async () => {
-    const conv = await processJsonlForConversation(join(FIXTURES_DIR, "skill-tooluse.jsonl"));
+    const conv = await processJsonlForConversation(
+      join(FIXTURES_DIR, "skill-tooluse.jsonl"),
+      new Set(["commit"]),
+    );
     expect(conv).not.toBeNull();
     expect(conv!.userMessages).toHaveLength(1);
     expect(conv!.userMessages[0].content).toBe("Please commit the changes");
@@ -218,7 +236,7 @@ describe("processJsonlForConversation", () => {
     const tmpFile = join(FIXTURES_DIR, "_test-empty.jsonl");
     await Bun.write(tmpFile, "");
     try {
-      const conv = await processJsonlForConversation(tmpFile);
+      const conv = await processJsonlForConversation(tmpFile, new Set());
       expect(conv).toBeNull();
     } finally {
       const { unlink } = await import("node:fs/promises");

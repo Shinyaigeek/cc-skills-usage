@@ -77,10 +77,9 @@ async function main(): Promise<void> {
 
   console.log("\x1b[2mScanning skill calls...\x1b[0m");
 
-  const [skills, calls] = await Promise.all([
-    getRegisteredSkills(opts.claudeDir),
-    scanSkillCalls(opts.claudeDir),
-  ]);
+  const skills = await getRegisteredSkills(opts.claudeDir);
+  const registeredSkillNames = new Set(skills.map((s) => s.name));
+  const calls = await scanSkillCalls(opts.claudeDir, registeredSkillNames);
 
   console.log(
     `\x1b[2mFound ${calls.length} skill calls across ${new Set(calls.map((c) => c.sessionId)).size} sessions\x1b[0m`,
@@ -89,7 +88,7 @@ async function main(): Promise<void> {
   let conversations: Conversation[] | undefined;
   if (opts.conversations) {
     console.log("\x1b[2mScanning all conversations...\x1b[0m");
-    conversations = await scanConversations(opts.claudeDir);
+    conversations = await scanConversations(opts.claudeDir, registeredSkillNames);
     console.log(`\x1b[2mFound ${conversations.length} total sessions\x1b[0m`);
   }
 
