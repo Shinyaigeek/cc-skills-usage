@@ -5,7 +5,7 @@ import { parseArgs } from "node:util";
 import type { CliOptions, Conversation } from "@cc-skills-usage/core";
 import {
   analyze,
-  getRegisteredSkills,
+  discoverAllSkills,
   scanConversations,
   scanSkillCalls,
 } from "@cc-skills-usage/core";
@@ -77,7 +77,7 @@ async function main(): Promise<void> {
 
   console.log("\x1b[2mScanning skill calls...\x1b[0m");
 
-  const skills = await getRegisteredSkills(opts.claudeDir);
+  const skills = await discoverAllSkills();
   const registeredSkillNames = new Set(skills.map((s) => s.name));
   const calls = await scanSkillCalls(opts.claudeDir, registeredSkillNames);
 

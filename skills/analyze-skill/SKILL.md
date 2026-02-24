@@ -21,7 +21,7 @@ If no argument is provided, ask the user for the skill name.
 Execute the following command using the Bash tool and capture the output:
 
 ```bash
-bunx cc-skills-usage@0.1.0 --conversations --skill <skill-name>
+bunx cc-skills-usage@0.1.1 --conversations --skill <skill-name>
 ```
 
 The output includes the following data:

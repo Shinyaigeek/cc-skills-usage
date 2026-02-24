@@ -1,6 +1,6 @@
 export { analyze } from "./analyzer.js";
 export { scanConversations, scanSkillCalls } from "./scanner.js";
-export { getRegisteredSkills } from "./skills.js";
+export { discoverAllSkills, getRegisteredSkills } from "./skills.js";
 export type {
   AnalysisResult,
   CliOptions,
