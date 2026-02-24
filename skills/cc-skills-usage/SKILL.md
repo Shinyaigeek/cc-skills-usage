@@ -36,7 +36,7 @@ If the user provides arguments, pass them directly to the command. If no argumen
 
 - `/cc-skills-usage` — Show usage stats for all skills
 - `/cc-skills-usage --from 2025-06-01` — Usage since June 1st
-- `/cc-skills-usage --skill devg` — Usage for the devg skill only
+- `/cc-skills-usage --skill example-skill` — Usage for the example-skill skill only
 - `/cc-skills-usage --project myapp --from 2025-06-01` — Filter by project and date range
 - `/cc-skills-usage --output web` — Open dashboard in browser
 - `/cc-skills-usage --conversations` — Detailed analysis including all conversation data

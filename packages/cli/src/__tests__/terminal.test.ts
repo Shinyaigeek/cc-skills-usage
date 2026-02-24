@@ -101,12 +101,12 @@ describe("renderTerminal", () => {
   test("renders unused skills section", () => {
     renderTerminal(
       makeResult({
-        unusedSkills: ["devg", "lint-fix"],
+        unusedSkills: ["example-skill", "lint-fix"],
       }),
     );
     const output = logOutput.join("\n");
     expect(output).toContain("Unused Skills");
-    expect(output).toContain("devg");
+    expect(output).toContain("example-skill");
     expect(output).toContain("lint-fix");
   });
 

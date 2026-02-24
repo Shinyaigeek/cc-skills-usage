@@ -175,7 +175,7 @@ export async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
         }
       }
 
-      // Check for slash command skill invocations (e.g. /devg, /review-pr)
+      // Check for slash command skill invocations (e.g. /example-skill, /review-pr)
       if (msg.type === "user" && msg.message?.content) {
         const content = msg.message.content;
         const texts: string[] = [];
@@ -196,7 +196,7 @@ export async function processJsonlFile(filePath: string): Promise<SkillCall[]> {
         for (const text of texts) {
           const cmdMatch = text.match(/<command-name>(\/[^<]+)<\/command-name>/);
           if (!cmdMatch) continue;
-          const cmd = cmdMatch[1]; // e.g. "/devg"
+          const cmd = cmdMatch[1]; // e.g. "/example-skill"
           if (BUILTIN_COMMANDS.has(cmd)) continue;
 
           // This is a skill slash command

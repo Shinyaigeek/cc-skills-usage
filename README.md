@@ -49,6 +49,6 @@ bun src/index.ts --project my-app
 Skill invocations are detected through two mechanisms:
 
 1. **Skill tool_use** — `tool_use` blocks (`name: "Skill"`) in assistant messages
-2. **Slash commands** — `<command-name>` tags in user messages (e.g., `/devg`, `/review-pr`)
+2. **Slash commands** — `<command-name>` tags in user messages (e.g., `/example-skill`, `/review-pr`)
 
 Built-in CLI commands (`/help`, `/clear`, etc.) are excluded. When the same skill is detected by both mechanisms, duplicates are removed.

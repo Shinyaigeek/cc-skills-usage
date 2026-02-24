@@ -10,7 +10,7 @@ Analyze the usage of a specified skill and output improvement suggestions for it
 
 ## Arguments
 
-- `skill-name` (required): The name of the skill to analyze (e.g., `devg`, `review-pr`)
+- `skill-name` (required): The name of the skill to analyze (e.g., `example-skill`, `review-pr`)
 
 If no argument is provided, ask the user for the skill name.
 

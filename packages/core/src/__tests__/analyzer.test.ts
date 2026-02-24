@@ -218,10 +218,10 @@ describe("analyze", () => {
       const skills: RegisteredSkill[] = [
         { name: "commit", dirPath: "/skills/commit" },
         { name: "review-pr", dirPath: "/skills/review-pr" },
-        { name: "devg", dirPath: "/skills/devg" },
+        { name: "example-skill", dirPath: "/skills/example-skill" },
       ];
       const result = analyze(calls, skills, makeOpts());
-      expect(result.unusedSkills).toEqual(["devg", "review-pr"]);
+      expect(result.unusedSkills).toEqual(["example-skill", "review-pr"]);
     });
 
     test("returns empty when all skills are used", () => {

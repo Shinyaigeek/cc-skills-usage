@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-cc-skills-usage is a Claude Code skill usage analytics tool. It scans Claude Code's JSONL project history (`~/.claude/projects/`), detects skill invocations (both direct Skill tool_use calls and slash command triggers like `/devg`), aggregates statistics, and renders results as either a terminal report or an interactive web dashboard.
+cc-skills-usage is a Claude Code skill usage analytics tool. It scans Claude Code's JSONL project history (`~/.claude/projects/`), detects skill invocations (both direct Skill tool_use calls and slash command triggers like `/example-skill`), aggregates statistics, and renders results as either a terminal report or an interactive web dashboard.
 
 ## Commands
 

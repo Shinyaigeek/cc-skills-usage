@@ -168,8 +168,8 @@ describe("processJsonlFile", () => {
     const calls = await processJsonlFile(join(FIXTURES_DIR, "mixed.jsonl"));
     // Should keep slash command entry and discard tool_use duplicate
     expect(calls).toHaveLength(1);
-    expect(calls[0].skillName).toBe("devg");
-    expect(calls[0].triggerMessage).toBe("/devg help me debug");
+    expect(calls[0].skillName).toBe("example-skill");
+    expect(calls[0].triggerMessage).toBe("/example-skill help me debug");
   });
 
   test("filters out builtin commands", async () => {
